@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../utils/db');
+const Staff = require('./Staff');
+const User = require('./User');
 
 const ServiceCategory = sequelize.define('ServiceCategory', {
   id: { type: DataTypes.BIGINT.UNSIGNED, primaryKey: true, autoIncrement: true },
@@ -19,4 +21,6 @@ const ServiceCategory = sequelize.define('ServiceCategory', {
   timestamps: false
 });
 
+Staff.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
+User.hasOne(Staff, { foreignKey: 'user_id', sourceKey: 'id' });
 module.exports = ServiceCategory;

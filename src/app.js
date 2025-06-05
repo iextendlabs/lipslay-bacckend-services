@@ -1,10 +1,13 @@
 const express = require('express');
+const cors = require('cors');
 const routes = require('./routes/index');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-
+app.use(cors({
+  origin: '*'
+}));
 app.use('/api', routes);
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded bodies
