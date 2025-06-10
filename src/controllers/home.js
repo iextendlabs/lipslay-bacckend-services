@@ -6,6 +6,7 @@ const {
   User,
   Review
 } = require('../models');
+const urls = require('../config/urls');
 
 const getHomeData = async (req, res) => {
   try {
@@ -16,7 +17,9 @@ const getHomeData = async (req, res) => {
     const servicesCarousel = mainCategories.map(cat => ({
       title: cat.title,
       description: cat.description || "",
-      image: 'https://test.lipslay.com/img/service-category-images/' + cat.image || "https://test.lipslay.com/images/services/default.jpg",
+      image: cat.image
+        ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
+        : `${urls.baseUrl}/images/services/default.jpg`,
       popular: !!cat.popular,
       href: `/services/${cat.slug}`,
     }));
@@ -35,7 +38,9 @@ const getHomeData = async (req, res) => {
           name: s.name,
           price: s.price,
           rating: avgRating ? Number(avgRating) : null,
-          image: s.image ? `https://test.lipslay.com/images/services/${s.image}` : "https://test.lipslay.com/images/services/default.jpg"
+          image: s.image
+            ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
+            : `${urls.baseUrl}${urls.serviceImages}default.jpg`
         };
       }));
     };
@@ -58,7 +63,9 @@ const getHomeData = async (req, res) => {
       experience: staff.experience || "5+ years",
       rating: staff.rating || 4.7,
       specialties: staff.specialties ? staff.specialties.split(',').map(s => s.trim()) : ["Cuts", "Color"],
-      image: staff.image ? `https://test.lipslay.com/images/staff/${staff.image}` : "https://test.lipslay.com/images/staff/default.jpg"
+      image: staff.image
+        ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
+        : `${urls.baseUrl}${urls.staffImages}default.jpg`
     }));
 
     // TESTIMONIALS (latest 3 reviews)
@@ -70,14 +77,16 @@ const getHomeData = async (req, res) => {
       name: r.user_name || "Anonymous",
       rating: r.rating,
       comment: r.content,
-      image: r.video ? `https://test.lipslay.com/images/users/${r.video}` : "https://test.lipslay.com/images/users/default.jpg"
+      image: r.video
+        ? `${urls.baseUrl}${urls.userImages}${r.video}`
+        : `${urls.baseUrl}${urls.userImages}default.jpg`
     }));
 
     // APP PROMOTION (static)
     const appPromotion = {
       title: "Download Our App",
       description: "Book, manage, and track your appointments easily.",
-      image: "https://test.lipslay.com/images/app-promo.jpg",
+      image: `${urls.baseUrl}/images/app-promo.jpg`,
       appStoreLink: "https://appstore.com/yourapp",
       playStoreLink: "https://play.google.com/store/apps/details?id=yourapp"
     };

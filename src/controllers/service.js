@@ -1,5 +1,6 @@
 const { Service, ServiceCategory, Faq, Review, Staff, User, ServiceImage } = require('../models');
 const striptags = require('striptags');
+const urls = require('../config/urls');
 
 const getServiceBySlug = async (req, res) => {
   try {
@@ -59,7 +60,7 @@ const getServiceBySlug = async (req, res) => {
       where: { service_id: service.id },
       attributes: ['image']
     });
-    const gallery = images.map(img => `https://test.lipslay.com/images/services/${img.image}`);
+    const gallery = images.map(img => `${urls.baseUrl}${urls.serviceGallery}${img.image}`);
 
     const features = service.features
       ? service.features.split('|')
@@ -90,7 +91,7 @@ const getServiceBySlug = async (req, res) => {
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.description), 100),
       longDescription: trimWords(service.long_description, 100),
-      image: service.image ? `https://test.lipslay.com/service-images/${service.image}` : null,
+      image: service.image ? `${urls.baseUrl}${urls.serviceImages}${service.image}` : null,
       gallery,
       features,
       faqs: faqs.map(f => ({
@@ -100,7 +101,7 @@ const getServiceBySlug = async (req, res) => {
       relatedServices: relatedServices.map(rs => ({
         name: rs.name,
         price: rs.price,
-        image: rs.image ? `https://test.lipslay.com/service-images/${rs.image}` : null,
+        image: rs.image ? `${urls.baseUrl}${urls.serviceImages}${rs.image}` : null,
         slug: rs.slug
       })),
       staffMembers: staffMembers.map(staff => ({
@@ -109,14 +110,14 @@ const getServiceBySlug = async (req, res) => {
         experience: "5+ years",
         rating: 4.7,
         specialties: ["Cuts", "Color"],
-        image: staff.image ? `https://test.lipslay.com/img/staff-images/${staff.image}` : null
+        image: staff.image ? `${urls.baseUrl}${urls.staffImages}${staff.image}` : null
       })),
       reviews: reviews.map(r => ({
         name: r.user_name,
         rating: r.rating,
         date: r.created_at ? r.created_at.toISOString().split('T')[0] : null,
         comment: trimWords(r.content, 100),
-        image: r.video ? `https://test.lipslay.com/images/users/${r.video}` : null
+        image: r.video ? `${urls.baseUrl}${urls.userImages}${r.video}` : null
       }))
     });
   } catch (error) {
