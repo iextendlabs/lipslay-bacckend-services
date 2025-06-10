@@ -10,21 +10,16 @@ const {
 const getHomeData = async (req, res) => {
   try {
     // SERVICES CAROUSEL (from categories)
-    const categories = await ServiceCategory.findAll({
+    const mainCategories = await ServiceCategory.findAll({
       where: { parent_id: null, status: 1 }
     });
-    const servicesCarousel = categories.map(cat => ({
+    const servicesCarousel = mainCategories.map(cat => ({
       title: cat.title,
       description: cat.description || "",
       image: 'https://test.lipslay.com/img/service-category-images/' + cat.image || "https://test.lipslay.com/images/services/default.jpg",
       popular: !!cat.popular,
       href: `/services/${cat.slug}`,
     }));
-
-    // Get all main categories
-    const mainCategories = await ServiceCategory.findAll({
-      where: { parent_id: null, status: 1 }
-    });
 
     // Helper to get featured services for a category
     const getFeatured = async (cat) => {

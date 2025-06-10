@@ -90,7 +90,7 @@ const getServiceBySlug = async (req, res) => {
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.description), 100),
       longDescription: trimWords(service.long_description, 100),
-      image: service.image ? `https://test.lipslay.com/images/services/${service.image}` : null,
+      image: service.image ? `https://test.lipslay.com/service-images/${service.image}` : null,
       gallery,
       features,
       faqs: faqs.map(f => ({
@@ -100,7 +100,7 @@ const getServiceBySlug = async (req, res) => {
       relatedServices: relatedServices.map(rs => ({
         name: rs.name,
         price: rs.price,
-        image: rs.image ? `https://test.lipslay.com/images/services/${rs.image}` : null,
+        image: rs.image ? `https://test.lipslay.com/service-images/${rs.image}` : null,
         slug: rs.slug
       })),
       staffMembers: staffMembers.map(staff => ({
