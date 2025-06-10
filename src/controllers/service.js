@@ -109,7 +109,7 @@ const getServiceBySlug = async (req, res) => {
         experience: "5+ years",
         rating: 4.7,
         specialties: ["Cuts", "Color"],
-        image: staff.image ? `https://test.lipslay.com/images/staff/${staff.image}` : null
+        image: staff.image ? `https://test.lipslay.com/images/staff-images/${staff.image}` : null
       })),
       reviews: reviews.map(r => ({
         name: r.user_name,
