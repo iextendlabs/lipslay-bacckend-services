@@ -29,7 +29,7 @@ const getHomeData = async (req, res) => {
       if (!cat) return [];
       const services = await Service.findAll({
         where: { category_id: cat.id, status: 1 },
-        limit: 5
+        limit: 4
       });
       return await Promise.all(services.map(async s => {
         const reviews = await Review.findAll({ where: { service_id: s.id } });
@@ -45,10 +45,15 @@ const getHomeData = async (req, res) => {
       }));
     };
 
-    // Build featuredServices for all main categories
-    const featuredServices = {};
+    // Build featuredServices for all main categories with category info
+    const featuredServices = [];
     for (const cat of mainCategories) {
-      featuredServices[cat.slug] = await getFeatured(cat);
+      const services = await getFeatured(cat);
+      featuredServices.push({
+        name: cat.title,
+        slug: cat.slug,
+        services
+      });
     }
 
     // STAFF MEMBERS (example: top 5 staff)
@@ -81,6 +86,7 @@ const getHomeData = async (req, res) => {
         ? `${urls.baseUrl}${urls.userImages}${r.video}`
         : `${urls.baseUrl}${urls.userImages}default.jpg`
     }));
+    
 
     // APP PROMOTION (static)
     const appPromotion = {
@@ -110,7 +116,7 @@ const getHomeData = async (req, res) => {
 
     res.json({
       servicesCarousel,
-      featuredServices, // now includes all main categories by slug
+      featuredServices, // now an array of { name, slug, services }
       staffMembers,
       testimonials,
       appPromotion,
