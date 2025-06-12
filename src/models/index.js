@@ -16,10 +16,8 @@ const StaffGroupStaffZone = require('./StaffGroupStaffZone');
 const StaffGroupToStaff = require('./StaffGroupToStaff');
 const TimeSlotToStaff = require('./TimeSlotToStaff');
 const StaffToServices = require('./StaffToServices');
+const ServiceToCategory = require('./ServiceToCategory');
 
-// One-to-many and belongs-to
-ServiceCategory.hasMany(Service, { foreignKey: 'category_id' });
-Service.belongsTo(ServiceCategory, { foreignKey: 'category_id' });
 
 ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
 Faq.belongsTo(ServiceCategory, { foreignKey: 'category_id' });
@@ -94,6 +92,16 @@ Staff.belongsToMany(Service, {
   foreignKey: 'staff_id',
   otherKey: 'service_id'
 });
+Service.belongsToMany(ServiceCategory, {
+  through: ServiceToCategory,
+  foreignKey: 'service_id',
+  otherKey: 'category_id'
+});
+ServiceCategory.belongsToMany(Service, {
+  through: ServiceToCategory,
+  foreignKey: 'category_id',
+  otherKey: 'service_id'
+});
 
 module.exports = {
   ServiceCategory,
@@ -112,5 +120,6 @@ module.exports = {
   StaffGroup,
   StaffGroupStaffZone,
   StaffGroupToStaff,
-  TimeSlotToStaff
+  TimeSlotToStaff,
+  ServiceToCategory
 };
