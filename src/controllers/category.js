@@ -2,7 +2,7 @@ const { ServiceCategory, Service, Review } = require('../models');
 const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const urls = require('../config/urls'); // Make sure this contains baseUrl
-const { format } = require('mysql2');
+const { formatPrice } = require('../utils/price');
 
 function formatCategory(cat, urls) {
   return {
@@ -64,7 +64,7 @@ const getCategoryBySlug = async (req, res) => {
       return {
         id: service.id,
         name: service.name,
-        price: service.price,
+        price: formatPrice(service.price),
         duration: service.duration,
         rating: avgRating ? Number(avgRating) : null,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),

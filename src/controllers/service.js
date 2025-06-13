@@ -1,6 +1,7 @@
 const { Service, ServiceCategory, Faq, Review, Staff, User, ServiceImage } = require('../models');
 const striptags = require('striptags');
 const urls = require('../config/urls');
+const { formatPrice } = require('../utils/price');
 
 const getServiceBySlug = async (req, res) => {
   try {
@@ -86,7 +87,7 @@ const getServiceBySlug = async (req, res) => {
 
     res.json({
       name: service.name,
-      price: service.price,
+      price: formatPrice(service.price),
       duration: service.duration,
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.description), 100),
@@ -100,7 +101,7 @@ const getServiceBySlug = async (req, res) => {
       })),
       relatedServices: relatedServices.map(rs => ({
         name: rs.name,
-        price: rs.price,
+        price: formatPrice(rs.price),
         image: rs.image ? `${urls.baseUrl}${urls.serviceImages}${rs.image}` : null,
         slug: rs.slug
       })),

@@ -131,3 +131,4 @@ dist
 .env
 .vscode/launch.json
 test_lipslay_Structure.sql
+package-lock.json

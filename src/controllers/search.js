@@ -1,6 +1,7 @@
 const { Op, literal } = require('sequelize');
 const { Service, ServiceCategory } = require('../models');
 const striptags = require('striptags');
+const { formatPrice } = require('../utils/price');
 
 const searchServices = async (req, res) => {
   try {
@@ -41,7 +42,7 @@ const searchServices = async (req, res) => {
         id: service.id,
         name: service.name,
         category: null,
-        price: service.price,
+        price: formatPrice(service.price),
         duration: service.duration,
         description: striptags(service.description),
         image: 'https://test.lipslay.com/service-images/' + service.image,

@@ -7,6 +7,7 @@ const {
   Review
 } = require('../models');
 const urls = require('../config/urls');
+const { formatPrice } = require('../utils/price');
 
 const getHomeData = async (req, res) => {
   try {
@@ -15,13 +16,14 @@ const getHomeData = async (req, res) => {
       where: { parent_id: null, status: 1 }
     });
     const categoryCarousel = mainCategories.map(cat => ({
+      id: cat.id,
       title: cat.title,
       description: cat.description || "",
       image: cat.image
         ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
         : `${urls.baseUrl}/images/services/default.jpg`,
       popular: !!cat.popular,
-      href: `/${cat.slug}`,
+      href: cat.slug,
     }));
 
     // Helper to get featured services for a category
@@ -36,7 +38,7 @@ const getHomeData = async (req, res) => {
         const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1) : null;
         return {
           name: s.name,
-          price: s.price,
+          price: formatPrice(s.price),
           rating: avgRating ? Number(avgRating) : null,
           image: s.image
             ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
