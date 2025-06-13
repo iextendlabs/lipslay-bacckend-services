@@ -13,7 +13,7 @@ function formatCategory(cat, urls) {
       ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
       : `${urls.baseUrl}/images/services/default.jpg`,
     popular: !!cat.popular,
-    href: `/services/${cat.slug}`,
+    href: `${cat.slug}`,
   };
 }
 // Utility to trim text to a max number of words
@@ -62,6 +62,7 @@ const getCategoryBySlug = async (req, res) => {
         : null;
 
       return {
+        id: service.id,
         name: service.name,
         price: service.price,
         duration: service.duration,
@@ -73,7 +74,7 @@ const getCategoryBySlug = async (req, res) => {
         features: service.features
           ? service.features.split('|').map(f => f.trim())
           : ["Consultation included", "Premium products", "Style guarantee"],
-        slug: service.slug
+        slug: category.slug + '/' + service.slug
       };
     }));
 

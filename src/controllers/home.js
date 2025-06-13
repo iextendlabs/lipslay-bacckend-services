@@ -21,7 +21,7 @@ const getHomeData = async (req, res) => {
         ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
         : `${urls.baseUrl}/images/services/default.jpg`,
       popular: !!cat.popular,
-      href: `/services/${cat.slug}`,
+      href: `/${cat.slug}`,
     }));
 
     // Helper to get featured services for a category
@@ -40,7 +40,10 @@ const getHomeData = async (req, res) => {
           rating: avgRating ? Number(avgRating) : null,
           image: s.image
             ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-            : `${urls.baseUrl}${urls.serviceImages}default.jpg`
+            : `${urls.baseUrl}${urls.serviceImages}default.jpg`,
+          description: "",
+          duration: s.duration,
+          slug: cat.slug + '/' + s.slug,
         };
       }));
     };
@@ -86,7 +89,7 @@ const getHomeData = async (req, res) => {
         ? `${urls.baseUrl}${urls.userImages}${r.video}`
         : `${urls.baseUrl}${urls.userImages}default.jpg`
     }));
-    
+
 
     // APP PROMOTION (static)
     const appPromotion = {
