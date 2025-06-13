@@ -14,7 +14,7 @@ const getHomeData = async (req, res) => {
     const mainCategories = await ServiceCategory.findAll({
       where: { parent_id: null, status: 1 }
     });
-    const servicesCarousel = mainCategories.map(cat => ({
+    const categoryCarousel = mainCategories.map(cat => ({
       title: cat.title,
       description: cat.description || "",
       image: cat.image
@@ -115,7 +115,7 @@ const getHomeData = async (req, res) => {
     };
 
     res.json({
-      servicesCarousel,
+      categoryCarousel,
       featuredServices, // now an array of { name, slug, services }
       staffMembers,
       testimonials,

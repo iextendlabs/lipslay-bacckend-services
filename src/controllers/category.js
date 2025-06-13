@@ -1,7 +1,21 @@
 const { ServiceCategory, Service, Review } = require('../models');
 const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
+const urls = require('../config/urls'); // Make sure this contains baseUrl
+const { format } = require('mysql2');
 
+function formatCategory(cat, urls) {
+  return {
+    id: cat.id,
+    title: cat.title,
+    description: cat.description || "",
+    image: cat.image
+      ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
+      : `${urls.baseUrl}/images/services/default.jpg`,
+    popular: !!cat.popular,
+    href: `/services/${cat.slug}`,
+  };
+}
 // Utility to trim text to a max number of words
 function trimWords(text, maxWords) {
   if (!text) return "";
@@ -64,15 +78,7 @@ const getCategoryBySlug = async (req, res) => {
     }));
 
     // Format subcategories
-    const subcategories = (category.childCategories || []).map(sub => ({
-      title: sub.title,
-      description: trimWords(sub.description || "", textLimits.subcategoryDescriptionWords),
-      image: sub.image
-        ? 'https://test.lipslay.com/img/service-category-images/' + sub.image
-        : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2070&auto=format&fit=crop",
-      popular: !!sub.popular,
-      slug: sub.slug
-    }));
+    const subcategories = (category.childCategories || []).map(sub => (formatCategory(sub, urls)));
 
     res.json({
       title: category.title,
@@ -81,6 +87,7 @@ const getCategoryBySlug = async (req, res) => {
         ? category.image
         : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2070&auto=format&fit=crop",
       services: formattedServices,
+      slug: category.slug,
       subcategories
     });
   } catch (error) {
@@ -95,15 +102,7 @@ const listMainCategories = async (req, res) => {
       where: { parent_id: null, status: 1 }
     });
 
-    const formatted = categories.map(cat => ({
-      title: cat.title,
-      description: trimWords(cat.description || "", textLimits.categoryDescriptionWords),
-      image: cat.image
-        ? 'https://test.lipslay.com/img/service-category-images/' + cat.image
-        : "https://test.lipslay.com/images/services/default.jpg",
-      popular: !!cat.popular,
-      slug: cat.slug
-    }));
+    const formatted = categories.map(cat => (formatCategory(cat, urls)));
 
     res.json(formatted);
   } catch (error) {

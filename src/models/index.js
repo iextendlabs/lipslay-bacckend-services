@@ -17,6 +17,7 @@ const StaffGroupToStaff = require('./StaffGroupToStaff');
 const TimeSlotToStaff = require('./TimeSlotToStaff');
 const StaffToServices = require('./StaffToServices');
 const ServiceToCategory = require('./ServiceToCategory');
+const Information = require('./Information');
 
 
 ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
@@ -121,5 +122,6 @@ module.exports = {
   StaffGroupStaffZone,
   StaffGroupToStaff,
   TimeSlotToStaff,
-  ServiceToCategory
+  ServiceToCategory,
+  Information
 };
