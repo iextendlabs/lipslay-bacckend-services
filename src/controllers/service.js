@@ -1,4 +1,4 @@
-const { Service, ServiceCategory, Faq, Review, Staff, User, ServiceImage } = require('../models');
+const { Service, ServiceCategory, Faq, Review, Staff, User, ServiceImage, Order, TimeSlot } = require('../models');
 const striptags = require('striptags');
 const urls = require('../config/urls');
 const { formatPrice } = require('../utils/price');
@@ -86,6 +86,7 @@ const getServiceBySlug = async (req, res) => {
     }
 
     res.json({
+      id: service.id,
       name: service.name,
       price: formatPrice(service.price),
       duration: service.duration,
@@ -126,5 +127,7 @@ const getServiceBySlug = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
 
 module.exports = { getServiceBySlug };

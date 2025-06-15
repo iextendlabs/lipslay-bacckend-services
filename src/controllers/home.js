@@ -8,6 +8,8 @@ const {
 } = require('../models');
 const urls = require('../config/urls');
 const { formatPrice } = require('../utils/price');
+const { trimWords } = require('../utils/trimWords');
+const textLimits = require('../config/textLimits');
 
 const getHomeData = async (req, res) => {
   try {
@@ -43,7 +45,7 @@ const getHomeData = async (req, res) => {
           image: s.image
             ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
             : `${urls.baseUrl}${urls.serviceImages}default.jpg`,
-          description: "",
+          description: trimWords(s.description, textLimits.serviceDescriptionWords),
           duration: s.duration,
           slug: cat.slug + '/' + s.slug,
         };

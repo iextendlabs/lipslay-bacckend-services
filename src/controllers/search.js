@@ -2,10 +2,31 @@ const { Op, literal } = require('sequelize');
 const { Service, ServiceCategory } = require('../models');
 const striptags = require('striptags');
 const { formatPrice } = require('../utils/price');
+const textLimits = require('../config/textLimits');
+const { trimWords } = require('../utils/trimWords');
 
 const searchServices = async (req, res) => {
   try {
     const q = req.query.q;
+    const id = req.query.id;
+
+    if (id) {
+      const service = await Service.findOne({
+        where: {
+          id: id,
+          status: 1
+        },
+        include: [{
+          model: ServiceCategory,
+          as: 'ServiceCategories',
+          attributes: ['title', 'slug'],
+          through: { attributes: [] }
+        }]
+      });
+
+      return res.json({ services: service ? [service] : [] });
+    }
+
     if (!q || q.trim() === '') {
       return res.json({ services: [] });
     }
@@ -24,7 +45,7 @@ const searchServices = async (req, res) => {
         model: ServiceCategory,
         as: 'ServiceCategories',
         attributes: ['title', 'slug'],
-         through: { attributes: [] }
+        through: { attributes: [] }
       }],
       limit: 20,
       order: [
@@ -34,23 +55,23 @@ const searchServices = async (req, res) => {
       ]
     });
 
-  const formatted = services
-    .filter(service => service.ServiceCategories && service.ServiceCategories.length > 0)
-    .map(service => {
-      const firstCategory = service.ServiceCategories[0];
-      return {
-        id: service.id,
-        name: service.name,
-        category: null,
-        price: formatPrice(service.price),
-        duration: service.duration,
-        description: striptags(service.description),
-        image: 'https://test.lipslay.com/service-images/' + service.image,
-        keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
-        slug: firstCategory.slug + '/' + service.slug ,
-        rating: service.rating || null,
-      };
-    });
+    const formatted = services
+      .filter(service => service.ServiceCategories && service.ServiceCategories.length > 0)
+      .map(service => {
+        const firstCategory = service.ServiceCategories[0];
+        return {
+          id: service.id,
+          name: service.name,
+          category: null,
+          price: formatPrice(service.price),
+          duration: service.duration,
+          description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
+          image: 'https://test.lipslay.com/service-images/' + service.image,
+          keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
+          slug: firstCategory.slug + '/' + service.slug,
+          rating: service.rating || null,
+        };
+      });
     res.json({ services: formatted });
   } catch (error) {
     console.error(error);

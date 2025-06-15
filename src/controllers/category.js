@@ -3,6 +3,7 @@ const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const urls = require('../config/urls'); // Make sure this contains baseUrl
 const { formatPrice } = require('../utils/price');
+const { trimWords } = require('../utils/trimWords');
 
 function formatCategory(cat, urls) {
   return {
@@ -15,12 +16,6 @@ function formatCategory(cat, urls) {
     popular: !!cat.popular,
     href: `${cat.slug}`,
   };
-}
-// Utility to trim text to a max number of words
-function trimWords(text, maxWords) {
-  if (!text) return "";
-  const words = text.split(/\s+/);
-  return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text;
 }
 
 const getCategoryBySlug = async (req, res) => {
@@ -60,7 +55,6 @@ const getCategoryBySlug = async (req, res) => {
       const avgRating = reviews.length
         ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
         : null;
-
       return {
         id: service.id,
         name: service.name,

@@ -18,6 +18,11 @@ const TimeSlotToStaff = require('./TimeSlotToStaff');
 const StaffToServices = require('./StaffToServices');
 const ServiceToCategory = require('./ServiceToCategory');
 const Information = require('./Information');
+const Coupon = require('./Coupon');
+const CouponHistory = require('./CouponHistory');
+const OrderTotal = require('./OrderTotal');
+const OrderService = require('./OrderService');
+const Affiliate = require('./Affiliate');
 
 
 ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
@@ -123,5 +128,10 @@ module.exports = {
   StaffGroupToStaff,
   TimeSlotToStaff,
   ServiceToCategory,
-  Information
+  Information,
+  Coupon,
+  CouponHistory,
+  OrderTotal,
+  OrderService,
+  Affiliate
 };

@@ -1,6 +1,7 @@
 const { TimeSlot, StaffZone, StaffHoliday, LongHoliday, Order, Staff, Service, ServiceCategory } = require('../models');
 const { Op } = require('sequelize');
 const moment = require('moment');
+const urls = require('../config/urls');
 
 
 const getBookingSlots = async (req, res) => {
@@ -36,7 +37,7 @@ const getBookingSlots = async (req, res) => {
       }).then(services =>
         services.flatMap(s => (s.Staffs || []).map(staff => staff.id))
       );
-      
+
       // Staff from service categories
       const serviceObjs = await Service.findAll({
         where: { id: { [Op.in]: services } },
@@ -142,23 +143,46 @@ const getBookingSlots = async (req, res) => {
         date,
         status: { [Op.notIn]: ['Canceled', 'Rejected', 'Draft'] }
       };
+
       if (order_id) {
         orderWhere.id = { [Op.ne]: order_id };
       }
-      const orders = await Order.findAll({ where: orderWhere });
+
+      // Only get the count of matching orders
+      const orderCount = await Order.count({ where: orderWhere });
 
       // Each staff can only take up to slot.seat orders
-      const seatAvailable = availableStaffIds.length * (slot.seat || 1) - orders.length;
+      const seatAvailable = availableStaffIds.length * (slot.seat || 1) - orderCount;
 
-      slots.push({
-        id: slot.id,
-        name: slot.name,
-        time_start: slot.time_start,
-        time_end: slot.time_end,
-        available: seatAvailable > 0,
-        seatAvailable,
-        availableStaffIds
+      // Fetch staff objects for availableStaffIds, including user name
+      const availableStaff = await Staff.findAll({
+        where: { id: availableStaffIds },
+        attributes: ['id', 'image', 'sub_title', 'phone', 'status'],
+        include: [{ model: require('../models/User'), attributes: ['name'] }]
       });
+
+      // Map to include user name at top level
+      const staffList = availableStaff.map(staff => ({
+        id: staff.id,
+        name: staff.User ? staff.User.name : '',
+        image: `${urls.baseUrl}${urls.staffImages}${staff.image}`,
+        sub_title: staff.sub_title,
+        phone: staff.phone,
+        status: staff.status
+      }));
+
+      // Only push slot if there is at least one staff available
+      if (staffList.length > 0) {
+        slots.push({
+          id: slot.id,
+          name: slot.name,
+          time_start: slot.time_start,
+          time_end: slot.time_end,
+          available: seatAvailable > 0,
+          seatAvailable,
+          staff: staffList,
+        });
+      }
     }
 
     res.json({ date, area, slots });

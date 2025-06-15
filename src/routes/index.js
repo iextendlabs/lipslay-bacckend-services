@@ -5,6 +5,7 @@ const router = express.Router();
 const { getHomeData } = require('../controllers/home');
 const { searchServices } = require('../controllers/search');
 const { getServiceBySlug } = require('../controllers/service');
+const { createOrder } = require('../controllers/checkout');
 const { getCategoryBySlug, listMainCategories } = require('../controllers/category');
 const { getBookingSlots } = require('../controllers/booking');
 const { getInfo } = require('../controllers/info'); // <-- Import the new controller
@@ -18,5 +19,6 @@ router.get('/categories', listMainCategories);
 router.post('/booking/slots', getBookingSlots);
 router.get('/info', getInfo); // <-- Use the controller here
 router.get('/faqs', listFaqs); // <-- Add the FAQ route
+router.post('/order', createOrder);
 
 module.exports = router;
