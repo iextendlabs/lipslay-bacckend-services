@@ -6,11 +6,17 @@ const Service = sequelize.define('Service', {
   name: DataTypes.STRING,
   description: DataTypes.TEXT,
   short_description: DataTypes.TEXT,
-  price: DataTypes.STRING,
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
   duration: DataTypes.STRING,
   image: DataTypes.STRING,
   category_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
-  discount: DataTypes.STRING,
+  discount:  {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
   status: DataTypes.STRING,
   type: DataTypes.STRING,
   quote: DataTypes.INTEGER,

@@ -1,10 +1,10 @@
 const { Service, Staff, User, Order, TimeSlot, Coupon, CouponHistory, OrderTotal, OrderService } = require('../models');
-const { 
-  findOrCreateUser, 
-  formattingBookingData, 
-  getCouponDiscount, 
-  getAffiliateId, 
-  getDriverForTimeSlot 
+const {
+  findOrCreateUser,
+  formattingBookingData,
+  getCouponDiscount,
+  getAffiliateId,
+  getDriverForTimeSlot
 } = require('../helpers/checkoutHelpers');
 const urls = require('../config/urls');
 
@@ -145,7 +145,13 @@ const createOrder = async (req, res) => {
       input.order_id = order.id;
       input.discount_amount = input.discount;
 
-      await OrderTotal.create(input);
+      await OrderTotal.create({
+        order_id: order.id,
+        sub_total,
+        discount,
+        staff_charges,
+        transport_charges
+      });
       if (input.coupon_id) {
         await CouponHistory.create(input);
       }

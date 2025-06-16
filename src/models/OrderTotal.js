@@ -7,8 +7,7 @@ const OrderTotal = sequelize.define('OrderTotal', {
   sub_total: DataTypes.DECIMAL(10,2),
   discount: DataTypes.DECIMAL(10,2),
   staff_charges: DataTypes.DECIMAL(10,2),
-  transport_charges: DataTypes.DECIMAL(10,2),
-  total_amount: DataTypes.DECIMAL(10,2)
+  transport_charges: DataTypes.DECIMAL(10,2)
 }, {
   tableName: 'order_totals',
   timestamps: false
