@@ -70,6 +70,7 @@ const getHomeData = async (req, res) => {
       limit: 5
     });
     staffMembers = staffMembers.map(staff => ({
+      id: staff.id,
       name: staff.User ? staff.User.name : "",
       role: staff.sub_title || "Stylist",
       experience: staff.experience || "5+ years",

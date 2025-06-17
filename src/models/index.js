@@ -17,6 +17,7 @@ const StaffGroupToStaff = require('./StaffGroupToStaff');
 const TimeSlotToStaff = require('./TimeSlotToStaff');
 const StaffToServices = require('./StaffToServices');
 const ServiceToCategory = require('./ServiceToCategory');
+const StaffToCategories = require('./StaffToCategories');
 const Information = require('./Information');
 const Coupon = require('./Coupon');
 const CouponHistory = require('./CouponHistory');
@@ -33,6 +34,10 @@ Faq.belongsTo(Service, { foreignKey: 'service_id' });
 
 Staff.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
 User.hasOne(Staff, { foreignKey: 'user_id' });
+
+// Add missing association for reviews
+Staff.hasMany(Review, { as: 'reviews', foreignKey: 'staff_id' });
+Review.belongsTo(Staff, { foreignKey: 'staff_id' });
 
 Review.belongsTo(User, { foreignKey: 'staff_id', targetKey: 'id' }); // staff_id references users.id
 Review.belongsTo(Service, { foreignKey: 'service_id', targetKey: 'id' });

@@ -26,4 +26,23 @@ describe('API Endpoints', () => {
     expect(res.body).toHaveProperty('services');
     expect(Array.isArray(res.body.services)).toBe(true);
   });
+
+  it('GET /staff should return staff detail or 400/404', async () => {
+    // Test missing param
+    let res = await request(app).get('/staff');
+    expect([400,404]).toContain(res.statusCode);
+
+    // Test with a fake slug/id (should 404)
+    res = await request(app).get('/staff?staff=nonexistent');
+    expect([400,404]).toContain(res.statusCode);
+
+    // Optionally, test with a real staff slug/id if you have fixtures
+    // res = await request(app).get('/staff?staff=1');
+    // expect(res.statusCode).toBe(200);
+    // expect(res.body).toHaveProperty('id');
+    // expect(res.body).toHaveProperty('name');
+    // expect(Array.isArray(res.body.services)).toBe(true);
+    // expect(Array.isArray(res.body.categories)).toBe(true);
+    // expect(Array.isArray(res.body.reviews)).toBe(true);
+  });
 });
