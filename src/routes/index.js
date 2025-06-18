@@ -13,6 +13,8 @@ const { getInfo } = require('../controllers/info'); // <-- Import the new contro
 const { listFaqs } = require('../controllers/faq'); // <-- Import the FAQ controller
 const { getStaffDetail } = require('../controllers/staff'); // <-- Import staff controller
 const { login } = require('../controllers/user'); // <-- Import login controller
+const { listOrders } = require('../controllers/order'); // <-- Import the new controller for orders
+
 router.get('/home', getHomeData);
 router.get('/search', searchServices);
 router.get('/service', getServiceBySlug);
@@ -34,5 +36,8 @@ router.get('/me', authenticateToken, (req, res) => {
     user: req.user
   });
 });
+
+// GET /orders - List orders for the authenticated user
+router.get('/orders', authenticateToken, listOrders); // <-- Use the new controller for listing orders
 
 module.exports = router;
