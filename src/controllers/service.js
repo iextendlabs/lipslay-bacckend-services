@@ -85,6 +85,12 @@ const getServiceBySlug = async (req, res) => {
       return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text;
     }
 
+    // Fetch service options
+    const options = await require('../models').ServiceOption.findAll({
+      where: { service_id: service.id },
+      attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
+    });
+
     res.json({
       id: service.id,
       name: service.name,
@@ -120,7 +126,8 @@ const getServiceBySlug = async (req, res) => {
         date: r.created_at ? r.created_at.toISOString().split('T')[0] : null,
         comment: trimWords(r.content, 100),
         image: r.video ? `${urls.baseUrl}${urls.userImages}${r.video}` : null
-      }))
+      })),
+      options
     });
   } catch (error) {
     console.error(error);

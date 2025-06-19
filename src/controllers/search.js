@@ -1,5 +1,5 @@
 const { Op, literal } = require('sequelize');
-const { Service, ServiceCategory } = require('../models');
+const { Service, ServiceCategory, ServiceOption } = require('../models');
 const striptags = require('striptags');
 const { formatPrice } = require('../utils/price');
 const textLimits = require('../config/textLimits');
@@ -23,8 +23,26 @@ const searchServices = async (req, res) => {
           through: { attributes: [] }
         }]
       });
-
-      return res.json({ services: service ? [service] : [] });
+      let options = [];
+      if (service) {
+        options = await ServiceOption.findAll({
+          where: { service_id: service.id },
+          attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
+        });
+      }
+      return res.json({ services: service ? [{
+        id: service.id,
+        name: service.name,
+        category: null,
+        price: formatPrice(service.price),
+        duration: service.duration,
+        description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
+        image: 'https://test.lipslay.com/service-images/' + service.image,
+        keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
+        slug: service.ServiceCategories && service.ServiceCategories[0] ? service.ServiceCategories[0].slug + '/' + service.slug : service.slug,
+        rating: service.rating || null,
+        options: options.map(o => o.toJSON())
+      }] : [] });
     }
 
     if (!q || q.trim() === '') {
@@ -55,10 +73,15 @@ const searchServices = async (req, res) => {
       ]
     });
 
-    const formatted = services
+    const formatted = await Promise.all(services
       .filter(service => service.ServiceCategories && service.ServiceCategories.length > 0)
-      .map(service => {
+      .map(async service => {
         const firstCategory = service.ServiceCategories[0];
+        // Fetch options for this service using the ServiceOption model directly
+        const options = await ServiceOption.findAll({
+          where: { service_id: service.id },
+          attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
+        });
         return {
           id: service.id,
           name: service.name,
@@ -70,8 +93,9 @@ const searchServices = async (req, res) => {
           keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
           slug: firstCategory.slug + '/' + service.slug,
           rating: service.rating || null,
+          options: options.map(o => o.toJSON()) // ensure plain objects
         };
-      });
+      }));
     res.json({ services: formatted });
   } catch (error) {
     console.error(error);

@@ -24,6 +24,7 @@ const CouponHistory = require('./CouponHistory');
 const OrderTotal = require('./OrderTotal');
 const OrderService = require('./OrderService');
 const Affiliate = require('./Affiliate');
+const ServiceOption = require('./ServiceOption');
 
 
 ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
@@ -138,5 +139,6 @@ module.exports = {
   CouponHistory,
   OrderTotal,
   OrderService,
-  Affiliate
+  Affiliate,
+  ServiceOption
 };
