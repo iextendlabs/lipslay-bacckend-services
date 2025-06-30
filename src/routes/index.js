@@ -39,6 +39,8 @@ router.get('/me', authenticateToken, (req, res) => {
 
 // GET /orders - List orders for the authenticated user
 router.get('/orders', authenticateToken, listOrders); // <-- Use the new controller for listing orders
+router.get('/getprofile', authenticateToken, userController.getProfile); // <-- Use the new controller for listing orders
+
 // TODO forget password endpoint
 // TODO order customer cancel endpoint
 // TODO ADD review endponit for customer

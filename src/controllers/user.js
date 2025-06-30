@@ -133,5 +133,29 @@ const register = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+const getProfile = async function (req, res)  {
+  const userId = req.user && req.user.userId;
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const countryCode = '+971';
+    res.json({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "Customer",
+      phone: user.phone ? user.phone.replace(countryCode, "") : "",
+      whatsapp: user.whatsapp ? user.whatsapp.replace(countryCode, "") : "",
+      affiliate: user.affiliate || "",
+      gender: user.gender || "Male"
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
-module.exports = { login, register };
+module.exports = { login, register, getProfile };
