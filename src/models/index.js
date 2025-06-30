@@ -25,6 +25,9 @@ const OrderTotal = require('./OrderTotal');
 const OrderService = require('./OrderService');
 const Affiliate = require('./Affiliate');
 const ServiceOption = require('./ServiceOption');
+const StaffToZone = require('./StaffToZone');
+const StaffGeneralHoliday = require('./StaffGeneralHoliday');
+const Holiday = require('./Holiday');
 
 
 ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
@@ -115,6 +118,17 @@ ServiceCategory.belongsToMany(Service, {
   otherKey: 'service_id'
 });
 
+StaffZone.belongsToMany(Staff, {
+  through: StaffToZone,
+  foreignKey: 'zone_id',
+  otherKey: 'user_id'
+});
+Staff.belongsToMany(StaffZone, {
+  through: StaffToZone,
+  foreignKey: 'user_id',
+  otherKey: 'zone_id'
+});
+
 module.exports = {
   ServiceCategory,
   Service,
@@ -140,5 +154,7 @@ module.exports = {
   OrderTotal,
   OrderService,
   Affiliate,
-  ServiceOption
+  ServiceOption,
+  StaffGeneralHoliday,
+  Holiday
 };
