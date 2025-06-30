@@ -8,7 +8,6 @@ const TimeSlot = sequelize.define('TimeSlot', {
   time_end: DataTypes.TIME,
   type: DataTypes.STRING,
   date: DataTypes.DATEONLY,
-  group_id: DataTypes.BIGINT,
   status: DataTypes.INTEGER,
   seat: DataTypes.INTEGER
 }, {
