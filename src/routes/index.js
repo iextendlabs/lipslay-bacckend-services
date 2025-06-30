@@ -12,7 +12,7 @@ const { getBookingSlots } = require('../controllers/booking');
 const { getInfo } = require('../controllers/info'); // <-- Import the new controller
 const { listFaqs } = require('../controllers/faq'); // <-- Import the FAQ controller
 const { getStaffDetail } = require('../controllers/staff'); // <-- Import staff controller
-const { login } = require('../controllers/user'); // <-- Import login controller
+const userController = require('../controllers/user'); // <-- Import user controller
 const { listOrders } = require('../controllers/order'); // <-- Import the new controller for orders
 
 router.get('/home', getHomeData);
@@ -25,9 +25,9 @@ router.get('/info', getInfo); // <-- Use the controller here
 router.get('/faqs', listFaqs); // <-- Add the FAQ route
 router.post('/order', createOrder);
 router.get('/staff', getStaffDetail); // <-- Add staff detail endpoint
-// login controller
-router.post('/login',login); // <-- Add login endpoint
-
+// login and registration controller
+router.post('/login', userController.login); // <-- Add login endpoint
+router.post('/register', userController.register); // <-- Add registration endpoint
 
 router.get('/me', authenticateToken, (req, res) => {
   // req.user was set by middleware
@@ -39,5 +39,9 @@ router.get('/me', authenticateToken, (req, res) => {
 
 // GET /orders - List orders for the authenticated user
 router.get('/orders', authenticateToken, listOrders); // <-- Use the new controller for listing orders
-
+// TODO forget password endpoint
+// TODO order customer cancel endpoint
+// TODO ADD review endponit for customer
+// TODO customer Add quote
+// TODO compaliaints add, delete, listing
 module.exports = router;

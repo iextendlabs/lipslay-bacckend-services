@@ -28,7 +28,8 @@ const ServiceOption = require('./ServiceOption');
 const StaffToZone = require('./StaffToZone');
 const StaffGeneralHoliday = require('./StaffGeneralHoliday');
 const Holiday = require('./Holiday');
-
+const ModelHasRoles = require('./ModelHasRoles');
+const UserAffiliate = require('./UserAffiliate'); // Add this line
 
 ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
 Faq.belongsTo(ServiceCategory, { foreignKey: 'category_id' });
@@ -129,6 +130,13 @@ Staff.belongsToMany(StaffZone, {
   otherKey: 'zone_id'
 });
 
+// Add associations for UserAffiliate
+UserAffiliate.belongsTo(User, { foreignKey: 'user_id' });
+User.hasOne(UserAffiliate, { foreignKey: 'user_id' });
+
+UserAffiliate.belongsTo(Affiliate, { foreignKey: 'affiliate_id' });
+Affiliate.hasMany(UserAffiliate, { foreignKey: 'affiliate_id' });
+
 module.exports = {
   ServiceCategory,
   Service,
@@ -156,5 +164,7 @@ module.exports = {
   Affiliate,
   ServiceOption,
   StaffGeneralHoliday,
-  Holiday
+  Holiday,
+  ModelHasRoles,
+  UserAffiliate // Add this to the exports
 };
