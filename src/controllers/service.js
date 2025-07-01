@@ -190,7 +190,15 @@ const getServiceBySlug = async (req, res) => {
       sub_title: staff.sub_title,
       phone: staff.phone,
       status: staff.status,
+      experience: staff.experience || null,
+      specialties: staff.specialties
+        ? staff.specialties.split(",").map((s) => s.trim())
+        : ["Cuts", "Color"],
+      role: staff.sub_title || "Stylist",
+      rating: staff.rating || 4.7,
+      charges: staff.charges || 0
     }));
+
 
     // --- Send Response ---
     res.json({
