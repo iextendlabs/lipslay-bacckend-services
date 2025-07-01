@@ -1,6 +1,11 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken"); // optional, for token generation
-const { User, ModelHasRoles, UserAffiliate, Staff, CustomerProfile } = require("../models"); // Add CustomerProfile to the import
+const {
+  User,
+  ModelHasRoles,
+  UserAffiliate,
+  CustomerProfile,
+} = require("../models"); // Add CustomerProfile to the import
 const { Role } = require("../models"); // You need to define a Role model for the 'roles' table
 const Affiliate = require("../models/Affiliate"); // Add this at the top with other imports
 
@@ -103,15 +108,12 @@ const register = async (req, res) => {
     const newUser = await User.create({
       name,
       email,
-      password: hashedPassword
-    });
-    // Create customer profile with number, whatsapp, gender
-    await CustomerProfile.create({
-      user_id: newUser.id,
+      password: hashedPassword,
       number,
       whatsapp,
-      gender
+      gender,
     });
+
     // Assign role after user creation
     await ModelHasRoles.create({
       role_id: 3,
@@ -126,109 +128,103 @@ const register = async (req, res) => {
         affiliate_id: affiliate.user_id,
       });
     }
-    return res.status(201).json({ message: "User registered successfully.", userId: newUser.id });
+    return res
+      .status(201)
+      .json({ message: "User registered successfully.", userId: newUser.id });
   } catch (error) {
     console.error("Registration error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
 
-const getProfile = async function (req, res)  {
+const getProfile = async function (req, res) {
   const userId = req.user && req.user.userId;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ message: "Unauthorized" });
   }
   try {
     const user = await User.findByPk(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
-    // Try to get phone/whatsapp from CustomerProfile, then Staff
-    let phone = "";
-    let whatsapp = "";
-    const customerProfile = await CustomerProfile.findOne({ where: { user_id: userId } });
-    if (customerProfile) {
-      phone = customerProfile.number || "";
-      whatsapp = customerProfile.whatsapp || "";
-    }
-    if (!phone || !whatsapp) {
-      const staff = await Staff.findOne({ where: { user_id: userId } });
-      if (staff) {
-        if (!phone) phone = staff.phone || "";
-        if (!whatsapp) whatsapp = staff.whatsapp || "";
-      }
-    }
-    const countryCode = '+971';
+
     res.json({
       name: user.name || "",
       email: user.email || "",
       role: user.role || "Customer",
-      phone: phone ? phone.replace(countryCode, "") : "",
-      whatsapp: whatsapp ? whatsapp.replace(countryCode, "") : "",
+      phone: user.number || "",
+      whatsapp: user.whatsapp || "",
       affiliate: user.affiliate || "",
-      gender: (customerProfile && customerProfile.gender) || user.gender || "Male"
+      gender: user.gender || "Male",
     });
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const setProfile = async function (req, res) {
   const userId = req.user && req.user.userId;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ message: "Unauthorized" });
   }
   try {
     const { name, email, phone, whatsapp, gender } = req.body;
     // Update User fields
     const user = await User.findByPk(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
     if (name) user.name = name;
     if (email) user.email = email;
+    if (phone) user.number = phone;
+    if (whatsapp) user.whatsapp = whatsapp;
+    if (gender) user.gender = gender;
     await user.save();
-    // Update or create CustomerProfile
-    let customerProfile = await CustomerProfile.findOne({ where: { user_id: userId } });
-    if (!customerProfile) {
-      res.status(500).json({ message: 'Internal server error' });
-    } else {
-      if (phone) customerProfile.number = phone;
-      if (whatsapp) customerProfile.whatsapp = whatsapp;
-      if (gender) customerProfile.gender = gender;
-      await customerProfile.save();
-      res.json({ message: 'Profile updated successfully.' });
-    }
+
+    res.json({ message: "Profile updated successfully." });
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const getAddresses = async function (req, res) {
   const userId = req.user && req.user.userId;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ message: "Unauthorized" });
   }
   try {
-    const addresses = await CustomerProfile.findAll({ where: { user_id: userId } });
+    const addresses = await CustomerProfile.findAll({
+      where: { user_id: userId },
+    });
     res.json(addresses);
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const saveAddress = async function (req, res) {
   const userId = req.user && req.user.userId;
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return res.status(401).json({ message: "Unauthorized" });
   }
   try {
-    const { address_id, buildingName, area, landmark, flatVilla, street, city, district, number, whatsapp, gender } = req.body;
+    const {
+      address_id,
+      buildingName,
+      area,
+      landmark,
+      flatVilla,
+      street,
+      city,
+      district,
+    } = req.body;
     let address;
     if (address_id) {
-      address = await CustomerProfile.findOne({ where: { id: address_id, user_id: userId } });
+      address = await CustomerProfile.findOne({
+        where: { id: address_id, user_id: userId },
+      });
       if (!address) {
-        return res.status(404).json({ message: 'Address not found' });
+        return res.status(404).json({ message: "Address not found" });
       }
       if (buildingName !== undefined) address.buildingName = buildingName;
       if (area !== undefined) address.area = area;
@@ -237,9 +233,6 @@ const saveAddress = async function (req, res) {
       if (street !== undefined) address.street = street;
       if (city !== undefined) address.city = city;
       if (district !== undefined) address.district = district;
-      if (number !== undefined) address.number = number;
-      if (whatsapp !== undefined) address.whatsapp = whatsapp;
-      if (gender !== undefined) address.gender = gender;
       await address.save();
     } else {
       address = await CustomerProfile.create({
@@ -251,15 +244,19 @@ const saveAddress = async function (req, res) {
         street,
         city,
         district,
-        number,
-        whatsapp,
-        gender
       });
     }
-    res.json({ message: 'Address saved successfully', address });
+    res.json({ message: "Address saved successfully", address });
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-module.exports = { login, register, getProfile, setProfile, getAddresses, saveAddress };
+module.exports = {
+  login,
+  register,
+  getProfile,
+  setProfile,
+  getAddresses,
+  saveAddress,
+};

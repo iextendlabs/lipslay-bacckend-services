@@ -15,7 +15,10 @@ const User = sequelize.define('User', {
   affiliate_program: DataTypes.STRING,
   freelancer_program: DataTypes.STRING,
   last_login_time: DataTypes.DATE,
-  login_source: DataTypes.STRING
+  login_source: DataTypes.STRING,
+  number: DataTypes.STRING,
+  whatsapp: DataTypes.STRING,
+  gender: DataTypes.STRING
 }, {
   tableName: 'users',
   timestamps: false

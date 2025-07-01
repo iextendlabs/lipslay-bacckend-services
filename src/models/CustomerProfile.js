@@ -11,9 +11,6 @@ const CustomerProfile = sequelize.define('CustomerProfile', {
   street: DataTypes.STRING,
   city: DataTypes.STRING,
   district: DataTypes.STRING,
-  number: DataTypes.STRING,
-  whatsapp: DataTypes.STRING,
-  gender: DataTypes.STRING,
   created_at: DataTypes.DATE,
   updated_at: DataTypes.DATE
 }, {
