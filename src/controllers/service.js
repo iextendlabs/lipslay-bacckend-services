@@ -1,140 +1,231 @@
-const { Service, ServiceCategory, Faq, Review, Staff, User, ServiceImage, Order, TimeSlot } = require('../models');
-const striptags = require('striptags');
-const urls = require('../config/urls');
-const { formatPrice } = require('../utils/price');
+const {
+  Service,
+  ServiceCategory,
+  Faq,
+  Review,
+  Staff,
+  User,
+  ServiceImage,
+  ServiceOption,
+} = require("../models");
+
+const { Op } = require("sequelize");
+const striptags = require("striptags");
+const urls = require("../config/urls");
+const { formatPrice } = require("../utils/price");
+
+// Utility to trim text
+const trimWords = (text, maxWords = 100) => {
+  if (!text) return "";
+  const words = text.split(/\s+/);
+  return words.length > maxWords
+    ? words.slice(0, maxWords).join(" ") + "..."
+    : text;
+};
 
 const getServiceBySlug = async (req, res) => {
   try {
     const slug = req.query.query;
-    if (!slug || slug.trim() === '') {
-      return res.status(400).json({ error: 'Missing or empty service slug.' });
+    if (!slug || slug.trim() === "") {
+      return res.status(400).json({ error: "Missing or empty service slug." });
     }
 
-    // Fetch service with category
+    // --- Fetch Main Service ---
     const service = await Service.findOne({
       where: { slug, status: 1 },
       include: [
-        { model: ServiceCategory, attributes: ['title', 'slug'] }
-      ]
+        {
+          model: Staff,
+          attributes: ["id", "image", "sub_title", "phone", "status"],
+          through: { attributes: [] },
+          include: [{ model: User, attributes: ["name", "email"] }],
+        },
+        {
+          model: ServiceCategory,
+          attributes: ["id", "title", "slug", "parent_id"],
+        },
+        {
+          association: "AddOns",
+          attributes: [
+            "id",
+            "name",
+            "price",
+            "discount",
+            "duration",
+            "image",
+            "slug",
+          ],
+        },
+        {
+          association: "Packages",
+          attributes: [
+            "id",
+            "name",
+            "price",
+            "discount",
+            "duration",
+            "image",
+            "slug",
+          ],
+        },
+      ],
     });
 
     if (!service) {
-      return res.status(404).json({ error: 'Service not found.' });
+      return res.status(404).json({ error: "Service not found." });
     }
 
-    // Fetch FAQs for this service
-    const faqs = await Faq.findAll({
-      where: { service_id: service.id, status: 1 },
-      attributes: ['question', 'answer'],
-      limit: 5
-    });
+    // --- Fetch Related Models ---
 
-    // Fetch related services (same category, exclude current)
-    const relatedServices = await Service.findAll({
-      where: {
-        category_id: service.category_id,
-        status: 1,
-        id: { $ne: service.id }
-      },
-      attributes: ['name', 'price', 'image', 'slug'],
-      limit: 3
-    });
+    const [faqs, reviews, images, options] = await Promise.all([
+      Faq.findAll({
+        where: { service_id: service.id, status: 1 },
+        attributes: ["question", "answer"],
+        limit: 5,
+      }),
+      Review.findAll({
+        where: { service_id: service.id },
+        attributes: ["user_name", "rating", "created_at", "content", "video"],
+      }),
+      ServiceImage.findAll({
+        where: { service_id: service.id },
+        attributes: ["image"],
+      }),
+      ServiceOption.findAll({
+        where: { service_id: service.id },
+        attributes: [
+          "id",
+          "option_name",
+          "option_price",
+          "option_duration",
+          "image",
+        ],
+      }),
+    ]);
 
-    // Fetch staff members (mocked, adjust as per your DB)
-    const staffMembers = await Staff.findAll({
-      where: { status: 1 },
-      include: [{
-        model: User,
-        attributes: ['name']
-      }],
-      attributes: ['image', 'about', 'sub_title']
-    });
+    // --- Format Related Data ---
 
-    // Fetch reviews for this service
-    const reviews = await Review.findAll({
-      where: { service_id: service.id },
-      attributes: ['user_name', 'rating', 'created_at', 'content', 'video']
-    });
+    const gallery = images.map(
+      (img) => `${urls.baseUrl}${urls.serviceGallery}${img.image}`
+    );
 
-    // Fetch gallery images
-    const images = await ServiceImage.findAll({
-      where: { service_id: service.id },
-      attributes: ['image']
-    });
-    const gallery = images.map(img => `${urls.baseUrl}${urls.serviceGallery}${img.image}`);
+    const addOns = (service.AddOns || []).map((addon) => ({
+      id: addon.id,
+      name: addon.name,
+      price: formatPrice(addon.price),
+      discount: addon.discount,
+      duration: addon.duration,
+      image: addon.image
+        ? `${urls.baseUrl}${urls.serviceImages}${addon.image}`
+        : null,
+      slug: addon.slug,
+    }));
 
-    const features = service.features
-      ? service.features.split('|')
-      : [
-          "Consultation with expert stylist",
-          "Shampoo and conditioning",
-          "Precision haircut",
-          "Blow dry and styling",
-          "Finishing products"
-        ];
+    const packages = (service.Packages || []).map((pkg) => ({
+      id: pkg.id,
+      name: pkg.name,
+      price: formatPrice(pkg.price),
+      discount: pkg.discount,
+      duration: pkg.duration,
+      image: pkg.image
+        ? `${urls.baseUrl}${urls.serviceImages}${pkg.image}`
+        : null,
+      slug: pkg.slug,
+    }));
 
-    // Calculate average rating
     const avgRating = reviews.length
-      ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+      ? (
+          reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        ).toFixed(1)
       : null;
 
-    // Utility to trim text to a max number of words
-    function trimWords(text, maxWords = 100) {
-      if (!text) return "";
-      const words = text.split(/\s+/);
-      return words.length > maxWords ? words.slice(0, maxWords).join(' ') + '...' : text;
-    }
-
-    // Fetch service options
-    const options = await require('../models').ServiceOption.findAll({
-      where: { service_id: service.id },
-      attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
+    // --- Get All Relevant Category IDs (including parent) ---
+    const categoryIds = (service.ServiceCategories || []).flatMap((cat) => {
+      const ids = [cat.id];
+      if (cat.parent_id) ids.push(cat.parent_id);
+      return ids;
     });
 
+    const uniqueCategoryIds = [...new Set(categoryIds)];
+
+    // --- Fetch Staff from All Related Categories ---
+    let staffFromCategories = [];
+    if (uniqueCategoryIds.length > 0) {
+      const categories = await ServiceCategory.findAll({
+        where: { id: { [Op.in]: uniqueCategoryIds } },
+        include: [
+          {
+            model: Staff,
+            attributes: ["id", "image", "sub_title", "phone", "status"],
+            through: { attributes: [] },
+            include: [{ model: User, attributes: ["name", "email"] }],
+          },
+        ],
+      });
+
+      staffFromCategories = categories.flatMap((cat) => cat.Staffs || []);
+    }
+
+    // --- Merge with Directly Assigned Staff and Deduplicate ---
+    // Merge staff from service and categories, ensuring uniqueness by staff.id
+    const staffDirect = service.Staffs || [];
+    const allStaff = [...staffDirect, ...staffFromCategories];
+
+    // Use a Map to deduplicate by staff.id
+    const staffMap = new Map();
+    allStaff.forEach((staff) => {
+      if (staff && staff.id && !staffMap.has(staff.id)) {
+        staffMap.set(staff.id, staff);
+      }
+    });
+
+    const staffMembers = Array.from(staffMap.values()).map((staff) => ({
+      id: staff.id,
+      name: staff.User?.name || null,
+      email: staff.User?.email || null,
+      image: staff.image
+        ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
+        : null,
+      about: staff.about,
+      sub_title: staff.sub_title,
+      phone: staff.phone,
+      status: staff.status,
+    }));
+
+    // --- Send Response ---
     res.json({
       id: service.id,
       name: service.name,
       price: formatPrice(service.price),
+      discount: formatPrice(service.discount),
       duration: service.duration,
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.description), 100),
       longDescription: trimWords(service.long_description, 100),
-      image: service.image ? `${urls.baseUrl}${urls.serviceImages}${service.image}` : null,
+      image: service.image
+        ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
+        : null,
       gallery,
-      features,
-      faqs: faqs.map(f => ({
+      faqs: faqs.map((f) => ({
         question: trimWords(f.question, 100),
-        answer: trimWords(f.answer, 100)
+        answer: trimWords(f.answer, 100),
       })),
-      relatedServices: relatedServices.map(rs => ({
-        name: rs.name,
-        price: formatPrice(rs.price),
-        image: rs.image ? `${urls.baseUrl}${urls.serviceImages}${rs.image}` : null,
-        slug: rs.slug
-      })),
-      staffMembers: staffMembers.map(staff => ({
-        name: staff.User ? staff.User.name : null,
-        role: staff.sub_title || "Stylist",
-        experience: "5+ years",
-        rating: 4.7,
-        specialties: ["Cuts", "Color"],
-        image: staff.image ? `${urls.baseUrl}${urls.staffImages}${staff.image}` : null
-      })),
-      reviews: reviews.map(r => ({
+      reviews: reviews.map((r) => ({
         name: r.user_name,
         rating: r.rating,
-        date: r.created_at ? r.created_at.toISOString().split('T')[0] : null,
+        date: r.created_at ? r.created_at.toISOString().split("T")[0] : null,
         comment: trimWords(r.content, 100),
-        image: r.video ? `${urls.baseUrl}${urls.userImages}${r.video}` : null
+        image: r.video ? `${urls.baseUrl}${urls.userImages}${r.video}` : null,
       })),
-      options
+      staffMembers,
+      options,
+      addOns,
+      packages,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
-
-
 
 module.exports = { getServiceBySlug };
