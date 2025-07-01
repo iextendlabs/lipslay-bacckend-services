@@ -14,6 +14,7 @@ const { listFaqs } = require('../controllers/faq'); // <-- Import the FAQ contro
 const { getStaffDetail } = require('../controllers/staff'); // <-- Import staff controller
 const userController = require('../controllers/user'); // <-- Import user controller
 const { listOrders } = require('../controllers/order'); // <-- Import the new controller for orders
+const stripeRoutes = require('./stripe');
 
 router.get('/home', getHomeData);
 router.get('/search', searchServices);
@@ -43,6 +44,8 @@ router.get('/getprofile', authenticateToken, userController.getProfile); // <-- 
 router.put('/setprofile', authenticateToken, userController.setProfile); // <-- Add setprofile endpoint
 router.get('/addresses', authenticateToken, userController.getAddresses);
 router.post('/saveaddress', authenticateToken, userController.saveAddress);
+
+router.use(stripeRoutes);
 
 // TODO forget password endpoint
 // TODO order customer cancel endpoint
