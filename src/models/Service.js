@@ -30,4 +30,20 @@ const Service = sequelize.define('Service', {
   timestamps: false
 });
 
+Service.belongsToMany(Service, {
+  as: 'AddOns',
+  through: 'service_add_ons', // <-- just the table name
+  foreignKey: 'service_id',
+  otherKey: 'add_on_id',
+  timestamps: false // <-- add this here
+});
+
+Service.belongsToMany(Service, {
+  as: 'Packages',
+  through: 'service_packages', // <-- just the table name
+  foreignKey: 'service_id',
+  otherKey: 'package_id',
+  timestamps: false // <-- add this here
+});
+
 module.exports = Service;

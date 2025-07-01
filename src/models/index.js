@@ -11,9 +11,6 @@ const StaffZone = require('./StaffZone');
 const StaffHoliday = require('./StaffHoliday');
 const LongHoliday = require('./LongHoliday');
 const Order = require('./Order');
-const StaffGroup = require('./StaffGroup');
-const StaffGroupStaffZone = require('./StaffGroupStaffZone');
-const StaffGroupToStaff = require('./StaffGroupToStaff');
 const TimeSlotToStaff = require('./TimeSlotToStaff');
 const StaffToServices = require('./StaffToServices');
 const ServiceToCategory = require('./ServiceToCategory');
@@ -66,49 +63,40 @@ Staff.belongsToMany(TimeSlot, {
   otherKey: 'time_slot_id'
 });
 
-StaffZone.belongsToMany(StaffGroup, {
-  through: StaffGroupStaffZone,
-  foreignKey: 'staff_zone_id',
-  otherKey: 'staff_group_id'
-});
-StaffGroup.belongsToMany(StaffZone, {
-  through: StaffGroupStaffZone,
-  foreignKey: 'staff_group_id',
-  otherKey: 'staff_zone_id'
-});
-
-StaffGroup.belongsToMany(Staff, {
-  through: StaffGroupToStaff,
-  foreignKey: 'staff_group_id',
-  otherKey: 'staff_id'
-});
-Staff.belongsToMany(StaffGroup, {
-  through: StaffGroupToStaff,
-  foreignKey: 'staff_id',
-  otherKey: 'staff_group_id'
-});
-
+// In ServiceCategory model
 ServiceCategory.belongsToMany(Staff, {
-  through: 'staff_to_categories',
+  through: StaffToCategories,
   foreignKey: 'category_id',
-  otherKey: 'staff_id'
+  otherKey: 'staff_id',
+  sourceKey: 'id',
+  targetKey: 'user_id'
 });
+
+// In Staff model
 Staff.belongsToMany(ServiceCategory, {
-  through: 'staff_to_categories',
+  through: StaffToCategories,
   foreignKey: 'staff_id',
-  otherKey: 'category_id'
+  otherKey: 'category_id',
+  sourceKey: 'user_id',
+  targetKey: 'id'
 });
 
 Service.belongsToMany(Staff, {
   through: StaffToServices,
   foreignKey: 'service_id',
-  otherKey: 'staff_id'
+  otherKey: 'staff_id',
+  sourceKey: 'id',
+  targetKey: 'user_id'
 });
+
 Staff.belongsToMany(Service, {
   through: StaffToServices,
   foreignKey: 'staff_id',
-  otherKey: 'service_id'
+  otherKey: 'service_id',
+  sourceKey: 'user_id',
+  targetKey: 'id'
 });
+
 Service.belongsToMany(ServiceCategory, {
   through: ServiceToCategory,
   foreignKey: 'service_id',
@@ -123,7 +111,7 @@ ServiceCategory.belongsToMany(Service, {
 StaffZone.belongsToMany(Staff, {
   through: StaffToZone,
   foreignKey: 'zone_id',
-  otherKey: 'user_id'
+  otherKey: 'user_id',
 });
 Staff.belongsToMany(StaffZone, {
   through: StaffToZone,
@@ -156,9 +144,6 @@ module.exports = {
   StaffHoliday,
   LongHoliday,
   Order,
-  StaffGroup,
-  StaffGroupStaffZone,
-  StaffGroupToStaff,
   TimeSlotToStaff,
   ServiceToCategory,
   Information,
