@@ -15,6 +15,17 @@ function formatCategory(cat, urls) {
       : `${urls.baseUrl}/images/services/default.jpg`,
     popular: !!cat.popular,
     href: `${cat.slug}`,
+    subcategories: (cat.childCategories || []).map(sub => ({
+      id: sub.id,
+      title: sub.title,
+      description: sub.description || "",
+      image: sub.image
+        ? `${urls.baseUrl}/img/service-category-images/${sub.image}`
+        : `${urls.baseUrl}/images/services/default.jpg`,
+      href: `${cat.slug}/${sub.slug}`,
+      popular: !!sub.popular
+    })),
+    slug: cat.slug,
   };
 }
 
@@ -94,7 +105,13 @@ const getCategoryBySlug = async (req, res) => {
 const listMainCategories = async (req, res) => {
   try {
     const categories = await ServiceCategory.findAll({
-      where: { parent_id: null, status: 1 }
+      where: { parent_id: null, status: 1 },
+      include: [{
+        model: ServiceCategory,
+        as: 'childCategories',
+        where: { status: 1 },
+        required: false
+      }]
     });
 
     const formatted = categories.map(cat => (formatCategory(cat, urls)));
