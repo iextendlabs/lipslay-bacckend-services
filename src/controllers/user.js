@@ -251,6 +251,29 @@ const saveAddress = async function (req, res) {
   }
 };
 
+const deleteAddress = async function (req, res) {
+  const userId = req.user && req.user.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { address_id } = req.body;
+    if (!address_id) {
+      return res.status(400).json({ message: "Address ID is required" });
+    }
+    const address = await CustomerProfile.findOne({
+      where: { id: address_id },
+    });
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+    await address.destroy();
+    res.json({ message: "Address deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -258,4 +281,5 @@ module.exports = {
   setProfile,
   getAddresses,
   saveAddress,
+  deleteAddress,
 };
