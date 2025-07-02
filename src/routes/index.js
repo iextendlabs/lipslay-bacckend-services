@@ -63,7 +63,7 @@ router.get("/getprofile", authenticateToken, userController.getProfile); // <-- 
 router.put("/setprofile", authenticateToken, userController.setProfile); // <-- Add setprofile endpoint
 router.get("/addresses", authenticateToken, userController.getAddresses);
 router.post("/saveaddress", authenticateToken, userController.saveAddress);
-router.post("/delete-address", authenticateToken, userController.deleteAddress);
+router.post("/deleteaddress", authenticateToken, userController.deleteAddress);
 
 router.use(stripeRoutes);
 
