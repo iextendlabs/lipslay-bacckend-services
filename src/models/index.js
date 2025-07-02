@@ -1,134 +1,159 @@
-const ServiceCategory = require('./ServiceCategory');
-const Service = require('./Service');
-const Staff = require('./Staff');
-const Faq = require('./Faq');
-const User = require('./User');
-const Review = require('./Review');
-const Setting = require('./Setting');
-const ServiceImage = require('./ServiceImage');
-const TimeSlot = require('./TimeSlot');
-const StaffZone = require('./StaffZone');
-const StaffHoliday = require('./StaffHoliday');
-const LongHoliday = require('./LongHoliday');
-const Order = require('./Order');
-const TimeSlotToStaff = require('./TimeSlotToStaff');
-const StaffToServices = require('./StaffToServices');
-const ServiceToCategory = require('./ServiceToCategory');
-const StaffToCategories = require('./StaffToCategories');
-const Information = require('./Information');
-const Coupon = require('./Coupon');
-const CouponHistory = require('./CouponHistory');
-const OrderTotal = require('./OrderTotal');
-const OrderService = require('./OrderService');
-const Affiliate = require('./Affiliate');
-const ServiceOption = require('./ServiceOption');
-const StaffToZone = require('./StaffToZone');
-const StaffGeneralHoliday = require('./StaffGeneralHoliday');
-const Holiday = require('./Holiday');
-const ModelHasRoles = require('./ModelHasRoles');
-const UserAffiliate = require('./UserAffiliate'); // Add this line
-const CustomerProfile = require('./CustomerProfile');
+const ServiceCategory = require("./ServiceCategory");
+const Service = require("./Service");
+const Staff = require("./Staff");
+const Faq = require("./Faq");
+const User = require("./User");
+const Review = require("./Review");
+const Setting = require("./Setting");
+const ServiceImage = require("./ServiceImage");
+const TimeSlot = require("./TimeSlot");
+const StaffZone = require("./StaffZone");
+const StaffHoliday = require("./StaffHoliday");
+const LongHoliday = require("./LongHoliday");
+const Order = require("./Order");
+const TimeSlotToStaff = require("./TimeSlotToStaff");
+const StaffToServices = require("./StaffToServices");
+const ServiceToCategory = require("./ServiceToCategory");
+const StaffToCategories = require("./StaffToCategories");
+const Information = require("./Information");
+const Coupon = require("./Coupon");
+const CouponHistory = require("./CouponHistory");
+const OrderTotal = require("./OrderTotal");
+const OrderService = require("./OrderService");
+const Affiliate = require("./Affiliate");
+const ServiceOption = require("./ServiceOption");
+const StaffToZone = require("./StaffToZone");
+const StaffGeneralHoliday = require("./StaffGeneralHoliday");
+const Holiday = require("./Holiday");
+const ModelHasRoles = require("./ModelHasRoles");
+const UserAffiliate = require("./UserAffiliate"); // Add this line
+const CustomerProfile = require("./CustomerProfile");
+const Complaint = require("./Complaint");
+const ComplaintChat = require("./ComplaintChat");
 
-ServiceCategory.hasMany(Faq, { foreignKey: 'category_id' });
-Faq.belongsTo(ServiceCategory, { foreignKey: 'category_id' });
+ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
+Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
 
-Service.hasMany(Faq, { foreignKey: 'service_id' });
-Faq.belongsTo(Service, { foreignKey: 'service_id' });
+Service.hasMany(Faq, { foreignKey: "service_id" });
+Faq.belongsTo(Service, { foreignKey: "service_id" });
 
-Staff.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
-User.hasOne(Staff, { foreignKey: 'user_id' });
+Staff.belongsTo(User, { foreignKey: "user_id", targetKey: "id" });
+User.hasOne(Staff, { foreignKey: "user_id" });
 
 // Add missing association for reviews
-Staff.hasMany(Review, { as: 'reviews', foreignKey: 'staff_id' });
-Review.belongsTo(Staff, { foreignKey: 'staff_id' });
+Staff.hasMany(Review, { as: "reviews", foreignKey: "staff_id" });
+Review.belongsTo(Staff, { foreignKey: "staff_id" });
 
-Review.belongsTo(User, { foreignKey: 'staff_id', targetKey: 'id' }); // staff_id references users.id
-Review.belongsTo(Service, { foreignKey: 'service_id', targetKey: 'id' });
+Review.belongsTo(User, { foreignKey: "staff_id", targetKey: "id" }); // staff_id references users.id
+Review.belongsTo(Service, { foreignKey: "service_id", targetKey: "id" });
 
-ServiceCategory.hasMany(ServiceCategory, { as: 'childCategories', foreignKey: 'parent_id' });
-ServiceCategory.belongsTo(ServiceCategory, { as: 'parentCategory', foreignKey: 'parent_id' });
+ServiceCategory.hasMany(ServiceCategory, {
+  as: "childCategories",
+  foreignKey: "parent_id",
+});
+ServiceCategory.belongsTo(ServiceCategory, {
+  as: "parentCategory",
+  foreignKey: "parent_id",
+});
 
-Service.hasMany(ServiceImage, { foreignKey: 'service_id' });
-ServiceImage.belongsTo(Service, { foreignKey: 'service_id' });
+Service.hasMany(ServiceImage, { foreignKey: "service_id" });
+ServiceImage.belongsTo(Service, { foreignKey: "service_id" });
 
 // Many-to-many
 TimeSlot.belongsToMany(Staff, {
   through: TimeSlotToStaff,
-  foreignKey: 'time_slot_id',
-  otherKey: 'staff_id'
+  foreignKey: "time_slot_id",
+  otherKey: "staff_id",
 });
 Staff.belongsToMany(TimeSlot, {
   through: TimeSlotToStaff,
-  foreignKey: 'staff_id',
-  otherKey: 'time_slot_id'
+  foreignKey: "staff_id",
+  otherKey: "time_slot_id",
 });
 
 // In ServiceCategory model
 ServiceCategory.belongsToMany(Staff, {
   through: StaffToCategories,
-  foreignKey: 'category_id',
-  otherKey: 'staff_id',
-  sourceKey: 'id',
-  targetKey: 'user_id'
+  foreignKey: "category_id",
+  otherKey: "staff_id",
+  sourceKey: "id",
+  targetKey: "user_id",
 });
 
 // In Staff model
 Staff.belongsToMany(ServiceCategory, {
   through: StaffToCategories,
-  foreignKey: 'staff_id',
-  otherKey: 'category_id',
-  sourceKey: 'user_id',
-  targetKey: 'id'
+  foreignKey: "staff_id",
+  otherKey: "category_id",
+  sourceKey: "user_id",
+  targetKey: "id",
 });
 
 Service.belongsToMany(Staff, {
   through: StaffToServices,
-  foreignKey: 'service_id',
-  otherKey: 'staff_id',
-  sourceKey: 'id',
-  targetKey: 'user_id'
+  foreignKey: "service_id",
+  otherKey: "staff_id",
+  sourceKey: "id",
+  targetKey: "user_id",
 });
 
 Staff.belongsToMany(Service, {
   through: StaffToServices,
-  foreignKey: 'staff_id',
-  otherKey: 'service_id',
-  sourceKey: 'user_id',
-  targetKey: 'id'
+  foreignKey: "staff_id",
+  otherKey: "service_id",
+  sourceKey: "user_id",
+  targetKey: "id",
 });
 
 Service.belongsToMany(ServiceCategory, {
   through: ServiceToCategory,
-  foreignKey: 'service_id',
-  otherKey: 'category_id'
+  foreignKey: "service_id",
+  otherKey: "category_id",
 });
 ServiceCategory.belongsToMany(Service, {
   through: ServiceToCategory,
-  foreignKey: 'category_id',
-  otherKey: 'service_id'
+  foreignKey: "category_id",
+  otherKey: "service_id",
 });
 
 StaffZone.belongsToMany(Staff, {
   through: StaffToZone,
-  foreignKey: 'zone_id',
-  otherKey: 'user_id',
+  foreignKey: "zone_id",
+  otherKey: "user_id",
 });
 Staff.belongsToMany(StaffZone, {
   through: StaffToZone,
-  foreignKey: 'user_id',
-  otherKey: 'zone_id'
+  foreignKey: "user_id",
+  otherKey: "zone_id",
 });
 
 // Add associations for UserAffiliate
-UserAffiliate.belongsTo(User, { foreignKey: 'user_id' });
-User.hasOne(UserAffiliate, { foreignKey: 'user_id' });
+UserAffiliate.belongsTo(User, { foreignKey: "user_id" });
+User.hasOne(UserAffiliate, { foreignKey: "user_id" });
 
-UserAffiliate.belongsTo(Affiliate, { foreignKey: 'affiliate_id' });
-Affiliate.hasMany(UserAffiliate, { foreignKey: 'affiliate_id' });
+UserAffiliate.belongsTo(Affiliate, { foreignKey: "affiliate_id" });
+Affiliate.hasMany(UserAffiliate, { foreignKey: "affiliate_id" });
 
 // Set up User <-> CustomerProfile association
-User.hasOne(CustomerProfile, { foreignKey: 'user_id', as: 'customerProfile' });
-CustomerProfile.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasOne(CustomerProfile, { foreignKey: "user_id", as: "customerProfile" });
+CustomerProfile.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// Complaint relations
+Complaint.belongsTo(User, { foreignKey: "user_id", as: "user" });
+User.hasMany(Complaint, { foreignKey: "user_id", as: "complaints" });
+
+Complaint.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+Order.hasMany(Complaint, { foreignKey: "order_id", as: "complaints" });
+
+// ComplaintChat relations
+ComplaintChat.belongsTo(User, { foreignKey: "user_id", as: "user" });
+User.hasMany(ComplaintChat, { foreignKey: "user_id", as: "complaintChats" });
+
+ComplaintChat.belongsTo(Complaint, {
+  foreignKey: "complaint_id",
+  as: "complaint",
+});
+Complaint.hasMany(ComplaintChat, { foreignKey: "complaint_id", as: "chats" });
 
 module.exports = {
   ServiceCategory,
@@ -158,4 +183,6 @@ module.exports = {
   ModelHasRoles,
   UserAffiliate, // Add this to the exports
   CustomerProfile,
+  Complaint,
+  ComplaintChat,
 };

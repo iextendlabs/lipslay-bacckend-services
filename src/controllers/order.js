@@ -19,6 +19,10 @@ const listOrders = async (req, res) => {
 };
 
 const cancelOrder = async (req, res) => {
+  const userId = req.user && (req.user.userId || req.user.id);
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   const { orderId } = req.body;
   if (!orderId) {
     return res.status(400).json({ message: "orderId is required" });

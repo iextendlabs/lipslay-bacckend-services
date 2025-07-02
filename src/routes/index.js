@@ -20,6 +20,7 @@ const userController = require("../controllers/user"); // <-- Import user contro
 const { listOrders, cancelOrder } = require("../controllers/order"); // <-- Import cancelOrder
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
+const complaintController = require("../controllers/complaint"); // <-- Add this import
 
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -75,6 +76,14 @@ router.post(
   ]),
   reviewController.addReview
 );
+// Complaints routes
+router.post("/complaints", authenticateToken, complaintController.create);
+router.get("/complaints/:id", authenticateToken, complaintController.view);
+router.get("/complaints", authenticateToken, complaintController.list);
+router.post(
+  "/complaints/chat",
+  authenticateToken,
+  complaintController.createChat
+);
 // TODO customer Add quote
-// TODO compaliaints add, delete, listing
 module.exports = router;
