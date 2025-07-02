@@ -76,7 +76,6 @@ const register = async (req, res) => {
       !password ||
       !number ||
       !whatsapp ||
-      !affiliate_code ||
       !gender
     ) {
       return res.status(400).json({ message: "All fields are required." });
