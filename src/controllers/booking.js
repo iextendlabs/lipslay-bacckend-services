@@ -9,6 +9,7 @@ const {
   ServiceCategory,
   StaffGeneralHoliday,
   Holiday,
+  User,
 } = require("../models");
 const { Op } = require("sequelize");
 const moment = require("moment");
@@ -51,7 +52,7 @@ const getBookingSlots = async (req, res) => {
     }
 
     const zoneStaffMembers = await staffZone.getStaffs();
-    const zoneStaffIds = zoneStaffMembers.map((staff) => staff.id);
+    const zoneStaffIds = zoneStaffMembers.map((staff) => staff.user_id);
 
     if (zoneStaffIds.length === 0) {
       return res.json({
@@ -63,11 +64,11 @@ const getBookingSlots = async (req, res) => {
     // 4. Get staff eligible based on services and service categories
     const staffFromServices = await Service.findAll({
       where: { id: { [Op.in]: services } },
-      include: [{ model: Staff, attributes: ["id"] }],
+      include: [{ model: Staff, attributes: ["user_id"] }],
     });
 
     const staffIdsDirect = staffFromServices.flatMap((service) =>
-      (service.Staffs || []).map((staff) => staff.id)
+      (service.Staffs || []).map((staff) => staff.user_id)
     );
 
     const serviceWithCategories = await Service.findAll({
@@ -79,7 +80,7 @@ const getBookingSlots = async (req, res) => {
             {
               model: Staff,
               through: { attributes: [] },
-              attributes: ["id"],
+              attributes: ["user_id"],
             },
           ],
         },
@@ -95,7 +96,7 @@ const getBookingSlots = async (req, res) => {
         if (!processedCategoryIds.has(category.id)) {
           processedCategoryIds.add(category.id);
           staffIdsFromCategories.push(
-            ...(category.Staffs || []).map((staff) => staff.id)
+            ...(category.Staffs || []).map((staff) => staff.user_id)
           );
         }
         // If category has a parent, add parent staff if not already processed
@@ -110,7 +111,7 @@ const getBookingSlots = async (req, res) => {
                 {
                   model: Staff,
                   through: { attributes: [] },
-                  attributes: ["id"],
+                  attributes: ["user_id"],
                 },
               ],
             }
@@ -119,7 +120,7 @@ const getBookingSlots = async (req, res) => {
           if (parentCategory) {
             processedCategoryIds.add(parentCategory.id);
             staffIdsFromCategories.push(
-              ...(parentCategory.Staffs || []).map((staff) => staff.id)
+              ...(parentCategory.Staffs || []).map((staff) => staff.user_id)
             );
           }
         }
@@ -237,7 +238,8 @@ const getBookingSlots = async (req, res) => {
     for (const slot of availableTimeSlots) {
       const slotStaffs = await slot.getStaffs();
       let slotStaffIds = slotStaffs
-        .map((s) => s.id)
+        .filter((s) => s.status === 1)
+        .map((s) => s.user_id)
         .filter((id) => availableStaffIds.includes(id));
 
       // Filter out staff on short holidays that overlap with slot
@@ -264,15 +266,22 @@ const getBookingSlots = async (req, res) => {
         orderQuery.id = { [Op.ne]: order_id };
       }
 
-      const orderCount = await Order.count({ where: orderQuery });
+      const ordersInSlot = await Order.findAll({
+        where: orderQuery,
+        attributes: ["service_staff_id"],
+      });
+      const orderStaffIds = ordersInSlot.map((order) => order.service_staff_id);
+      const orderCount = orderStaffIds.length;
+
+      slotStaffIds = slotStaffIds.filter((id) => !orderStaffIds.includes(id));
       const seatPerSlot = slot.seat || 1;
       const totalAvailableSeats =
         slotStaffIds.length * seatPerSlot - orderCount;
 
       const assignedStaff = await Staff.findAll({
-        where: { id: slotStaffIds },
+        where: { user_id: slotStaffIds },
         attributes: ["id", "image", "sub_title", "phone", "status"],
-        include: [{ model: require("../models/User"), attributes: ["name"] }],
+        include: [{ model: User, attributes: ["name"] }],
       });
 
       const staffList = assignedStaff.map((staff) => ({

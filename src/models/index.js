@@ -64,11 +64,15 @@ TimeSlot.belongsToMany(Staff, {
   through: TimeSlotToStaff,
   foreignKey: "time_slot_id",
   otherKey: "staff_id",
+  sourceKey: "id",        // TimeSlot.id
+  targetKey: "user_id",   // Staff.user_id
 });
 Staff.belongsToMany(TimeSlot, {
   through: TimeSlotToStaff,
   foreignKey: "staff_id",
   otherKey: "time_slot_id",
+  sourceKey: "user_id",   // Staff.user_id
+  targetKey: "id",        // TimeSlot.id
 });
 
 // In ServiceCategory model
@@ -120,11 +124,15 @@ StaffZone.belongsToMany(Staff, {
   through: StaffToZone,
   foreignKey: "zone_id",
   otherKey: "user_id",
+  sourceKey: "id",        // StaffZone.id
+  targetKey: "user_id",   // Staff.user_id
 });
 Staff.belongsToMany(StaffZone, {
   through: StaffToZone,
   foreignKey: "user_id",
   otherKey: "zone_id",
+  sourceKey: "user_id",   // Staff.user_id
+  targetKey: "id",        // StaffZone.id
 });
 
 // Add associations for UserAffiliate
