@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../utils/db');
+const ReviewImage = require('./ReviewImage'); // <-- Add this line
 
 const Review = sequelize.define('Review', {
   id: { type: DataTypes.BIGINT.UNSIGNED, primaryKey: true, autoIncrement: true },
@@ -16,5 +17,9 @@ const Review = sequelize.define('Review', {
   tableName: 'reviews',
   timestamps: false
 });
+
+// Add association
+Review.hasMany(ReviewImage, { foreignKey: 'review_id', as: 'images' });
+ReviewImage.belongsTo(Review, { foreignKey: 'review_id', as: 'review' });
 
 module.exports = Review;

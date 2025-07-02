@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middleware/authMiddleware");
+const createUpload = require("../utils/upload");
 
 // Import controller functions
 const { getHomeData } = require("../controllers/home");
@@ -18,6 +19,20 @@ const { getStaffDetail } = require("../controllers/staff"); // <-- Import staff 
 const userController = require("../controllers/user"); // <-- Import user controller
 const { listOrders, cancelOrder } = require("../controllers/order"); // <-- Import cancelOrder
 const stripeRoutes = require("./stripe");
+const reviewController = require("../controllers/review");
+
+const reviewUpload = createUpload({
+  getPath: (file) => {
+    if (file.fieldname === "images") {
+      return process.env.REVIEW_IMAGE_UPLOAD_PATH || "uploads/review-images";
+    }
+    if (file.fieldname === "video") {
+      return process.env.REVIEW_VIDEO_UPLOAD_PATH || "uploads/review-videos";
+    }
+    return "uploads/review-images";
+  },
+  defaultPath: "uploads/review-images",
+});
 
 router.get("/home", getHomeData);
 router.get("/search", searchServices);
@@ -52,7 +67,14 @@ router.use(stripeRoutes);
 
 // TODO forget password endpoint
 router.post("/order/cancel", authenticateToken, cancelOrder);
-// TODO ADD review endponit for customer
+router.post(
+  "/review",
+  reviewUpload.fields([
+    { name: "images", maxCount: 5 },
+    { name: "video", maxCount: 1 },
+  ]),
+  reviewController.addReview
+);
 // TODO customer Add quote
 // TODO compaliaints add, delete, listing
 module.exports = router;
