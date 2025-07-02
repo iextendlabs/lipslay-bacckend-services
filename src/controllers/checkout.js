@@ -37,12 +37,13 @@ const createOrder = async (req, res) => {
 
       const [date, service_staff_id, time_slot_id] = key.split('_');
       input.date = date;
-      input.service_staff_id = service_staff_id;
       input.time_slot_id = time_slot_id;
       input.order_source = 'Site';
 
-      const staff = await User.findByPk(service_staff_id, { include: [{ model: Staff }] });
+      // Fetch staff by Staff model and include User
+      const staff = await Staff.findByPk(service_staff_id, { include: [{ model: User }] });
       const selected_services = await Service.findAll({ where: { id: singleBookingService } });
+      input.service_staff_id = staff.User.id;
 
       let sub_total = 0;
       for (const service of selected_services) {
@@ -70,7 +71,7 @@ const createOrder = async (req, res) => {
         }
       }
 
-      const staff_charges = staff?.Staff?.charges || 0;
+      const staff_charges = staff?.charges || 0;
       const transport_charges = staffZone.transport_charges || 0;
       const total_amount = sub_total + staff_charges + transport_charges - discount;
 
@@ -92,7 +93,8 @@ const createOrder = async (req, res) => {
         input.affiliate_id = await getAffiliateId(input.affiliate_code);
       }
 
-      input.staff_name = staff.name;
+      // Use staff.User.name for staff_name
+      input.staff_name = staff?.User?.name || '';
       const time_slot = await TimeSlot.findByPk(input.time_slot_id);
       input.time_slot_value = time_slot ? `${time_slot.time_start} -- ${time_slot.time_end}` : '';
       input.time_start = time_slot?.time_start || '';
@@ -123,7 +125,7 @@ const createOrder = async (req, res) => {
         number: input.number,
         whatsapp: input.whatsapp,
         service_staff_id: input.service_staff_id,
-        staff_name: staff.name,
+        staff_name: staff?.User?.name || '',
         date: input.date,
         time_slot_id: input.time_slot_id,
         time_slot_value: time_slot ? `${time_slot.time_start} -- ${time_slot.time_end}` : '',
