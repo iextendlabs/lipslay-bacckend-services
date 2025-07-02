@@ -42,7 +42,19 @@ const view = async (req, res) => {
       ],
     });
     if (!complaint) return res.status(404).json({ error: "Not found" });
-    res.json(complaint);
+
+    // Convert to plain object
+    const complaintObj = complaint.toJSON();
+
+    // Add 'self' property to each chat
+    if (complaintObj.chats && Array.isArray(complaintObj.chats)) {
+      complaintObj.chats = complaintObj.chats.map((chat) => ({
+        ...chat,
+        self: chat.user_id === userId,
+      }));
+    }
+
+    res.json(complaintObj);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
