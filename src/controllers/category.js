@@ -22,7 +22,7 @@ function formatCategory(cat, urls) {
       image: sub.image
         ? `${urls.baseUrl}/img/service-category-images/${sub.image}`
         : `${urls.baseUrl}/images/services/default.jpg`,
-      href: `${cat.slug}/${sub.slug}`,
+      href: sub.slug,
       popular: !!sub.popular
     })),
     slug: cat.slug,
