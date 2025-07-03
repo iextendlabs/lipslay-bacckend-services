@@ -17,7 +17,7 @@ const { getInfo } = require("../controllers/info"); // <-- Import the new contro
 const { listFaqs } = require("../controllers/faq"); // <-- Import the FAQ controller
 const { getStaffDetail } = require("../controllers/staff"); // <-- Import staff controller
 const userController = require("../controllers/user"); // <-- Import user controller
-const { listOrders, cancelOrder } = require("../controllers/order"); // <-- Import cancelOrder
+const { listOrders, cancelOrder, orderTotal } = require("../controllers/order"); // <-- Add orderTotal
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
 const complaintController = require("../controllers/complaint"); // <-- Add this import
@@ -67,8 +67,9 @@ router.post("/deleteaddress", authenticateToken, userController.deleteAddress);
 
 router.use(stripeRoutes);
 
-// TODO forget password endpoint
 router.post("/order/cancel", authenticateToken, cancelOrder);
+router.post("/order/total", authenticateToken, orderTotal);
+
 router.post(
   "/review",
   reviewUpload.fields([
@@ -87,4 +88,10 @@ router.post(
   complaintController.createChat
 );
 // TODO customer Add quote
+// TODO order total
+// TODO zone base pricing
+// TODO zone selection
+// TODO Multiple service selection in cart
+// TODO service options
+// TODO forget password endpoint
 module.exports = router;

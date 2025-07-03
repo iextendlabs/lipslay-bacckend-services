@@ -1,4 +1,4 @@
-const { Order } = require("../models");
+const { Order, Staff, StaffZone } = require("../models");
 
 // List orders for the authenticated user
 const listOrders = async (req, res) => {
@@ -40,7 +40,46 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+const orderTotal = async (req, res) => {
+  try {
+    const { services, staff, customerDetails, date, timeSlot } = req.body;
+
+    // Calculate service price total
+    let servicePrice = 0;
+    if (Array.isArray(services)) {
+      servicePrice = services.reduce((sum, s) => {
+        const price = parseFloat((s.price || "0").replace(/[^\d.]/g, ""));
+        return sum + (isNaN(price) ? 0 : price);
+      }, 0);
+    }
+
+    // Fetch staff_charges from Staff table
+    let staff_charges = 0;
+    if (staff && staff.id) {
+      const staffRecord = await Staff.findOne({ where: { id: staff.id } });
+      staff_charges = staffRecord && staffRecord.charges ? parseFloat(staffRecord.charges) : 0;
+    }
+
+    // Fetch zone_transport_charges from staff_zones table
+    let zone_transport_charges = 0;
+    if (customerDetails && customerDetails.area) {
+      const zone = await StaffZone.findOne({ where: { name: customerDetails.area } });
+      zone_transport_charges = zone && zone.transport_charges ? parseFloat(zone.transport_charges) : 0;
+    }
+
+    res.json({
+      staff_charges,
+      zone_transport_charges,
+      service_price: servicePrice,
+      total: staff_charges + zone_transport_charges + servicePrice,
+    });
+  } catch (err) {
+    res.status(400).json({ error: "Could not calculate order total", details: err.message });
+  }
+};
+
 module.exports = {
   listOrders,
   cancelOrder,
+  orderTotal
 };
