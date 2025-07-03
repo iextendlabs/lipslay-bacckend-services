@@ -1,7 +1,9 @@
 ## installation 
   node 22
-    npm i
-      npm run dev
+    
+  npm i
+    
+  npm run dev
 
 ## .env
 
