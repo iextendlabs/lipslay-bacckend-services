@@ -24,20 +24,34 @@ exports.createPaymentIntent = async (req, res) => {
 exports.stripePayment = async (req, res) => {
   try {
     const { paymentMethodId, amount, currency, description, order_ids } = req.body;
-    const userId = req.user && req.user.userId;
     if (!paymentMethodId || !amount || !currency) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
-    const user = await User.findByPk(userId);
-    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    // Get customer_name and customer_email from any one order
+    let customerName = null;
+    let customerEmail = null;
+    if (order_ids && Array.isArray(order_ids) && order_ids.length > 0) {
+      const order = await Order.findOne({ where: { id: order_ids[0] } });
+      if (order) {
+        customerName = order.customer_name;
+        customerEmail = order.customer_email;
+      }
+    }
+
+    if (!customerEmail) {
+      return res.status(400).json({ message: 'Order customer email not found.' });
+    }
+
     // Create a customer if needed
     let customer;
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
     if (customers.data.length > 0) {
       customer = customers.data[0];
     } else {
-      customer = await stripe.customers.create({ email: user.email, name: user.name });
+      customer = await stripe.customers.create({ email: customerEmail, name: customerName });
     }
+
     // Create payment intent and confirm
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
@@ -48,6 +62,7 @@ exports.stripePayment = async (req, res) => {
       confirm: true,
       description: description || 'Payment',
     });
+
     // Optionally update order status if order_ids provided
     if (order_ids && Array.isArray(order_ids)) {
       await Order.update({ status: 'Pending', payment_method: 'Credit-Debit-Card' }, { where: { id: order_ids } });
