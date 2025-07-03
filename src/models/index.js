@@ -186,6 +186,14 @@ SubTitle.belongsToMany(Staff, {
   as: "staffs",
 });
 
+// Order <-> OrderService association
+Order.hasMany(OrderService, { foreignKey: "order_id", as: "order_services" });
+OrderService.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+// OrderService <-> Service association
+OrderService.belongsTo(Service, { foreignKey: "service_id", as: "service" });
+Service.hasMany(OrderService, { foreignKey: "service_id", as: "order_services" });
+
 module.exports = {
   ServiceCategory,
   Service,

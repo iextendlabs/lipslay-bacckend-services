@@ -17,7 +17,7 @@ const { getInfo } = require("../controllers/info"); // <-- Import the new contro
 const { listFaqs } = require("../controllers/faq"); // <-- Import the FAQ controller
 const { getStaffDetail } = require("../controllers/staff"); // <-- Import staff controller
 const userController = require("../controllers/user"); // <-- Import user controller
-const { listOrders, cancelOrder, orderTotal } = require("../controllers/order"); // <-- Add orderTotal
+const { listOrders, cancelOrder, orderTotal, getOrdersByIds } = require("../controllers/order"); // <-- Add orderTotal
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
 const complaintController = require("../controllers/complaint"); // <-- Add this import
@@ -69,7 +69,8 @@ router.post("/deleteaddress", authenticateToken, userController.deleteAddress);
 router.use(stripeRoutes);
 
 router.post("/order/cancel", authenticateToken, cancelOrder);
-router.post("/order/total", authenticateToken, orderTotal);
+router.post("/gettotals", orderTotal);
+router.get("/getorders", getOrdersByIds);
 
 router.post(
   "/review",
