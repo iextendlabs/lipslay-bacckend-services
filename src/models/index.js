@@ -30,6 +30,8 @@ const UserAffiliate = require("./UserAffiliate"); // Add this line
 const CustomerProfile = require("./CustomerProfile");
 const Complaint = require("./Complaint");
 const ComplaintChat = require("./ComplaintChat");
+const SubTitle = require("./SubTitle");
+const StaffSubTitle = require("./StaffSubTitle");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -41,8 +43,12 @@ Staff.belongsTo(User, { foreignKey: "user_id", targetKey: "id" });
 User.hasOne(Staff, { foreignKey: "user_id" });
 
 // Add missing association for reviews
-Staff.hasMany(Review, { as: "reviews", foreignKey: "staff_id" });
-Review.belongsTo(Staff, { foreignKey: "staff_id" });
+Staff.hasMany(Review, {
+  as: "reviews",
+  foreignKey: "staff_id",
+  sourceKey: "user_id",
+});
+Review.belongsTo(Staff, { foreignKey: "staff_id", targetKey: "user_id" });
 
 Review.belongsTo(User, { foreignKey: "staff_id", targetKey: "id" }); // staff_id references users.id
 Review.belongsTo(Service, { foreignKey: "service_id", targetKey: "id" });
@@ -64,15 +70,15 @@ TimeSlot.belongsToMany(Staff, {
   through: TimeSlotToStaff,
   foreignKey: "time_slot_id",
   otherKey: "staff_id",
-  sourceKey: "id",        // TimeSlot.id
-  targetKey: "user_id",   // Staff.user_id
+  sourceKey: "id",
+  targetKey: "user_id",
 });
 Staff.belongsToMany(TimeSlot, {
   through: TimeSlotToStaff,
   foreignKey: "staff_id",
   otherKey: "time_slot_id",
-  sourceKey: "user_id",   // Staff.user_id
-  targetKey: "id",        // TimeSlot.id
+  sourceKey: "user_id",
+  targetKey: "id",
 });
 
 // In ServiceCategory model
@@ -124,15 +130,15 @@ StaffZone.belongsToMany(Staff, {
   through: StaffToZone,
   foreignKey: "zone_id",
   otherKey: "user_id",
-  sourceKey: "id",        // StaffZone.id
-  targetKey: "user_id",   // Staff.user_id
+  sourceKey: "id",
+  targetKey: "user_id",
 });
 Staff.belongsToMany(StaffZone, {
   through: StaffToZone,
   foreignKey: "user_id",
   otherKey: "zone_id",
-  sourceKey: "user_id",   // Staff.user_id
-  targetKey: "id",        // StaffZone.id
+  sourceKey: "user_id",
+  targetKey: "id",
 });
 
 // Add associations for UserAffiliate
@@ -162,6 +168,23 @@ ComplaintChat.belongsTo(Complaint, {
   as: "complaint",
 });
 Complaint.hasMany(ComplaintChat, { foreignKey: "complaint_id", as: "chats" });
+
+Staff.belongsToMany(SubTitle, {
+  through: StaffSubTitle,
+  foreignKey: "staff_id",
+  otherKey: "sub_title_id",
+  sourceKey: "user_id",
+  targetKey: "id",
+  as: "subTitles",
+});
+SubTitle.belongsToMany(Staff, {
+  through: StaffSubTitle,
+  foreignKey: "sub_title_id",
+  otherKey: "staff_id",
+  sourceKey: "id",
+  targetKey: "user_id",
+  as: "staffs",
+});
 
 module.exports = {
   ServiceCategory,
@@ -193,4 +216,6 @@ module.exports = {
   CustomerProfile,
   Complaint,
   ComplaintChat,
+  SubTitle,
+  StaffSubTitle,
 };

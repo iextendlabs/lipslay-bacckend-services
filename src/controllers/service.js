@@ -7,6 +7,7 @@ const {
   User,
   ServiceImage,
   ServiceOption,
+  SubTitle,
 } = require("../models");
 
 const { Op } = require("sequelize");
@@ -38,7 +39,22 @@ const getServiceBySlug = async (req, res) => {
           model: Staff,
           attributes: ["id", "image", "sub_title", "phone", "status"],
           through: { attributes: [] },
-          include: [{ model: User, attributes: ["name", "email"] }],
+          include: [
+            { model: User, attributes: ["name", "email"] },
+            {
+              model: SubTitle,
+              as: "subTitles",
+              attributes: ["name"],
+              through: { attributes: [] },
+            },
+            {
+              model: Review,
+              as: "reviews",
+              attributes: [
+                "rating"
+              ],
+            },
+          ],
         },
         {
           model: ServiceCategory,
@@ -139,7 +155,6 @@ const getServiceBySlug = async (req, res) => {
         ).toFixed(1)
       : null;
 
-    // --- Get All Relevant Category IDs (including parent) ---
     const categoryIds = (service.ServiceCategories || []).flatMap((cat) => {
       const ids = [cat.id];
       if (cat.parent_id) ids.push(cat.parent_id);
@@ -148,7 +163,6 @@ const getServiceBySlug = async (req, res) => {
 
     const uniqueCategoryIds = [...new Set(categoryIds)];
 
-    // --- Fetch Staff from All Related Categories ---
     let staffFromCategories = [];
     if (uniqueCategoryIds.length > 0) {
       const categories = await ServiceCategory.findAll({
@@ -166,7 +180,6 @@ const getServiceBySlug = async (req, res) => {
       staffFromCategories = categories.flatMap((cat) => cat.Staffs || []);
     }
 
-    // --- Merge with Directly Assigned Staff and Deduplicate ---
     // Merge staff from service and categories, ensuring uniqueness by staff.id
     const staffDirect = service.Staffs || [];
     const allStaff = [...staffDirect, ...staffFromCategories];
@@ -179,26 +192,50 @@ const getServiceBySlug = async (req, res) => {
       }
     });
 
-    const staffMembers = Array.from(staffMap.values()).map((staff) => ({
-      id: staff.id,
-      name: staff.User?.name || null,
-      email: staff.User?.email || null,
-      image: staff.image
-        ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-        : null,
-      about: staff.about,
-      sub_title: staff.sub_title,
-      phone: staff.phone,
-      status: staff.status,
-      experience: staff.experience || null,
-      specialties: staff.specialties
-        ? staff.specialties.split(",").map((s) => s.trim())
-        : ["Cuts", "Color"],
-      role: staff.sub_title || "Stylist",
-      rating: staff.rating || 4.7,
-      charges: staff.charges || 0
-    }));
+    const staffMembers = Array.from(staffMap.values()).map((staff) => {
+      // Get sub_titles as array of names, then join with '/'
+      let subTitleStr = null;
+      if (Array.isArray(staff.subTitles) && staff.subTitles.length > 0) {
+        subTitleStr = staff.subTitles.map((st) => st.name).join(" / ");
+      }
 
+      // Safely calculate average review rating
+      let avg_review_rating = null;
+      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+        avg_review_rating = (
+          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+          staff.reviews.length
+        ).toFixed(1);
+      }
+
+      // Get up to 3 category names, or if none, up to 3 service names
+      let specialties = [];
+      if (Array.isArray(staff.ServiceCategories) && staff.ServiceCategories.length > 0) {
+        specialties = staff.ServiceCategories.slice(0, 3).map(cat => cat.title);
+      } else if (Array.isArray(staff.Services) && staff.Services.length > 0) {
+        specialties = staff.Services.slice(0, 3).map(svc => svc.name);
+      } else if (staff.specialties) {
+        specialties = staff.specialties.split(",").map((s) => s.trim()).slice(0, 3);
+      } else {
+        specialties = ["Cuts", "Color"];
+      }
+
+      return {
+        id: staff.id,
+        name: staff.User?.name || null,
+        email: staff.User?.email || null,
+        image: staff.image
+          ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
+          : null,
+        about: staff.about,
+        sub_title: subTitleStr,
+        phone: staff.phone,
+        status: staff.status,
+        specialties,
+        rating: avg_review_rating || 0,
+        charges: staff.charges || 0,
+      };
+    });
 
     // --- Send Response ---
     res.json({
