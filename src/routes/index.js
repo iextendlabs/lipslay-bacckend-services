@@ -21,6 +21,7 @@ const { listOrders, cancelOrder, orderTotal } = require("../controllers/order");
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
 const complaintController = require("../controllers/complaint"); // <-- Add this import
+const holidayController = require('../controllers/holiday');
 
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -87,6 +88,8 @@ router.post(
   authenticateToken,
   complaintController.createChat
 );
+// Holidays routes
+router.get('/holidays', holidayController.listHolidayDates);
 // TODO customer Add quote
 // TODO order total
 // TODO zone base pricing
