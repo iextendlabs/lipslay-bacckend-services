@@ -1,4 +1,7 @@
-const { formattingBookingData } = require("../helpers/checkoutHelpers");
+const {
+  formattingBookingData,
+  getAffiliateId,
+} = require("../helpers/checkoutHelpers");
 const {
   Order,
   Staff,
@@ -8,8 +11,10 @@ const {
   Service,
   TimeSlot,
   User,
+  Coupon,
+  ServiceCategory,
 } = require("../models");
-
+const { Op } = require("sequelize");
 // List orders for the authenticated user
 const listOrders = async (req, res) => {
   try {
@@ -75,15 +80,49 @@ const orderTotal = async (req, res) => {
   try {
     const input = req.body;
     const bookingData = input.bookingData;
-    const staffZone = await StaffZone.findByPk(5);
+    const staffZone = await StaffZone.findByPk(input.zone_id);
+    const currentDate = new Date();
+
+    const [formattedBookings, groupedBookingOption, groupedBooking] =
+      await formattingBookingData(bookingData);
+
+    let allServiceIds = [];
+    for (const key in groupedBooking) {
+      allServiceIds = allServiceIds.concat(groupedBooking[key]);
+    }
+
+    allServiceIds = [...new Set(allServiceIds)];
+
+    const selected_services = await Service.findAll({
+      where: { id: allServiceIds },
+    });
+
+    if (input.affiliate_code) {
+      const affiliate_id = await getAffiliateId(input.affiliate_code);
+      if (affiliate_id == null) {
+        return res.status(400).json({ error: "Affiliate user not exist." });
+      }
+    }
+
+    if (input.coupon_code) {
+      // Validate coupon for this user and booking
+      const isValid = await Coupon.isValidCoupon(
+        input.coupon_code,
+        selected_services,
+        input.user_id,
+        groupedBookingOption,
+        staffZone.extra_charges || 0
+      );
+      if (isValid !== true) {
+        return res.status(400).json({ error: isValid });
+      }
+    }
 
     let all_sub_total = 0,
       all_staff_charges = 0,
       all_transport_charges = 0,
+      all_coupon_discount = 0,
       all_total_amount = 0;
-
-    const [formattedBookings, groupedBookingOption, groupedBooking] =
-      await formattingBookingData(bookingData);
 
     for (const key in groupedBooking) {
       const singleBookingService = groupedBooking[key];
@@ -91,7 +130,7 @@ const orderTotal = async (req, res) => {
 
       // Fetch staff by Staff model and include User
       const staff = await Staff.findOne({
-        where: { user_id: service_staff_id },
+        where: { id: service_staff_id },
         include: [{ model: User }],
       });
       const selected_services = await Service.findAll({
@@ -111,12 +150,39 @@ const orderTotal = async (req, res) => {
             parseFloat(staffZone.extra_charges || 0);
         }
       }
+      let discount = 0;
+      if (input.coupon_code && singleBookingService.length > 0) {
+        const coupon = await Coupon.findOne({
+          where: {
+            code: input.coupon_code,
+            status: 1,
+            date_start: { [Op.lte]: currentDate },
+            date_end: { [Op.gte]: currentDate },
+          },
+          include: [
+            { model: ServiceCategory, through: { attributes: [] } },
+            { model: Service, through: { attributes: [] } },
+          ],
+        });
+
+        if (coupon) {
+          discount = await Coupon.getDiscountForProducts(
+            coupon,
+            selected_services,
+            sub_total,
+            groupedBookingOption,
+            staffZone.extra_charges || 0
+          );
+        }
+      }
 
       const staff_charges = parseFloat(staff?.charges || 0);
       const transport_charges = parseFloat(staffZone.transport_charges || 0);
 
-      const total_amount = sub_total + staff_charges + transport_charges;
+      const total_amount =
+        sub_total + staff_charges + transport_charges - discount;
 
+      all_coupon_discount += discount;
       all_sub_total += sub_total;
       all_staff_charges += staff_charges;
       all_transport_charges += transport_charges;
@@ -127,6 +193,7 @@ const orderTotal = async (req, res) => {
       "Staff Charges": all_staff_charges.toFixed(2),
       "Transport Charges": all_transport_charges.toFixed(2),
       "Service Total": all_sub_total.toFixed(2),
+      "Coupon Discount": all_coupon_discount.toFixed(2),
       Total: all_total_amount.toFixed(2),
     });
   } catch (err) {

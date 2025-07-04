@@ -18,7 +18,7 @@ const ShortHoliday = require("../models/ShortHoliday");
 
 const getBookingSlots = async (req, res) => {
   try {
-    const { services, date, area, isAdmin = false, order_id = null } = req.body;
+    const { services, date, area, isAdmin = false, order_id = null, zone_id } = req.body;
 
     // 1. Validate input
     if (!services || !Array.isArray(services)) {
@@ -43,7 +43,7 @@ const getBookingSlots = async (req, res) => {
     }
 
     // 3. Find staff zone
-    const staffZone = await StaffZone.findOne({ where: { name: area } });
+    const staffZone = await StaffZone.findByPk(zone_id);
     if (!staffZone) {
       return res.json({
         slots: [],

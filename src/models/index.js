@@ -192,7 +192,52 @@ OrderService.belongsTo(Order, { foreignKey: "order_id", as: "order" });
 
 // OrderService <-> Service association
 OrderService.belongsTo(Service, { foreignKey: "service_id", as: "service" });
-Service.hasMany(OrderService, { foreignKey: "service_id", as: "order_services" });
+Service.hasMany(OrderService, {
+  foreignKey: "service_id",
+  as: "order_services",
+});
+
+Coupon.belongsToMany(ServiceCategory, {
+  through: "coupon_to_category",
+  foreignKey: "coupon_id",
+  otherKey: "category_id",
+  timestamps: false,
+});
+ServiceCategory.belongsToMany(Coupon, {
+  through: "coupon_to_category",
+  foreignKey: "category_id",
+  otherKey: "coupon_id",
+  timestamps: false,
+});
+
+Service.belongsToMany(Coupon, {
+  through: "coupon_to_service",
+  foreignKey: "service_id",
+  otherKey: "coupon_id",
+  timestamps: false,
+});
+Coupon.belongsToMany(Service, {
+  through: "coupon_to_service",
+  foreignKey: "coupon_id",
+  otherKey: "service_id",
+  timestamps: false,
+});
+
+Coupon.belongsToMany(User, {
+  through: "customer_coupons",
+  foreignKey: "coupon_id",
+  otherKey: "customer_id",
+  timestamps: false,
+});
+User.belongsToMany(Coupon, {
+  through: "customer_coupons",
+  foreignKey: "customer_id",
+  otherKey: "coupon_id",
+  timestamps: false,
+});
+
+Order.hasMany(CouponHistory, { foreignKey: "order_id" });
+CouponHistory.belongsTo(Order, { foreignKey: "order_id" });
 
 module.exports = {
   ServiceCategory,

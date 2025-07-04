@@ -13,7 +13,6 @@ const {
 const {
   findOrCreateUser,
   formattingBookingData,
-  getCouponDiscount,
   getAffiliateId,
   getDriverForTimeSlot,
 } = require("../helpers/checkoutHelpers");
@@ -24,7 +23,7 @@ const createOrder = async (req, res) => {
   try {
     const input = req.body;
     const bookingData = input.bookingData;
-    const staffZone = await StaffZone.findByPk(5);
+    const staffZone = await StaffZone.findByPk(input.zone_id);
 
     let password = ""; // Placeholder for compatibility
     const [customerType, customer_id] = await findOrCreateUser(input);
@@ -60,7 +59,7 @@ const createOrder = async (req, res) => {
 
       // Fetch staff by Staff model and include User
       const staff = await Staff.findOne({
-        where: { user_id: service_staff_id },
+        where: { id: service_staff_id },
         include: [{ model: User }],
       });
       const selected_services = await Service.findAll({
@@ -86,29 +85,16 @@ const createOrder = async (req, res) => {
         const coupon = await Coupon.findOne({
           where: { code: input.coupon_code },
         });
+
         if (coupon) {
-          if (coupon.type === "Fixed Amount" && i === 0) {
-            discount = await getCouponDiscount(
-              coupon,
-              selected_services,
-              sub_total,
-              groupedBookingOption,
-              staffZone.extra_charges || 0
-            );
-            if (discount > 0) {
-              input.coupon_id = coupon.id;
-              i++;
-            }
-          } else if (coupon.type === "Percentage") {
-            input.coupon_id = coupon.id;
-            discount = await getCouponDiscount(
-              coupon,
-              selected_services,
-              sub_total,
-              groupedBookingOption,
-              staffZone.extra_charges || 0
-            );
-          }
+          discount = await Coupon.getDiscountForProducts(
+            coupon,
+            selected_services,
+            sub_total,
+            groupedBookingOption,
+            staffZone.extra_charges || 0
+          );
+          input.coupon_id = coupon.id;
         }
       }
 

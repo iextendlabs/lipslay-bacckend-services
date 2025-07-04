@@ -17,23 +17,30 @@ const { getInfo } = require("../controllers/info"); // <-- Import the new contro
 const { listFaqs } = require("../controllers/faq"); // <-- Import the FAQ controller
 const { getStaffDetail } = require("../controllers/staff"); // <-- Import staff controller
 const userController = require("../controllers/user"); // <-- Import user controller
-const { listOrders, cancelOrder, orderTotal, getOrdersByIds } = require("../controllers/order"); // <-- Add orderTotal
+const {
+  listOrders,
+  cancelOrder,
+  orderTotal,
+  getOrdersByIds,
+} = require("../controllers/order"); // <-- Add orderTotal
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
 const complaintController = require("../controllers/complaint"); // <-- Add this import
-const holidayController = require('../controllers/holiday');
+const holidayController = require("../controllers/holiday");
+const couponController = require("../controllers/coupon");
+const zoneController = require("../controllers/zone");
 
 const reviewUpload = createUpload({
   getPath: (file) => {
     if (file.fieldname === "images") {
-      return process.env.REVIEW_IMAGE_UPLOAD_PATH || "uploads/review-images";
+      return process.env.REVIEW_IMAGE_UPLOAD_PATH || "src/images/review-images";
     }
     if (file.fieldname === "video") {
-      return process.env.REVIEW_VIDEO_UPLOAD_PATH || "uploads/review-videos";
+      return process.env.REVIEW_VIDEO_UPLOAD_PATH || "src/images/review-videos";
     }
-    return "uploads/review-images";
+    return "src/images/review-images";
   },
-  defaultPath: "uploads/review-images",
+  defaultPath: "src/images/review-images",
 });
 
 router.get("/home", getHomeData);
@@ -90,7 +97,9 @@ router.post(
   complaintController.createChat
 );
 // Holidays routes
-router.get('/holidays', holidayController.listHolidayDates);
+router.get("/holidays", holidayController.listHolidayDates);
+router.post("/coupon", couponController.applyCoupon);
+router.get("/zones", zoneController.listZones);
 // TODO customer Add quote
 // TODO order total
 // TODO zone base pricing
