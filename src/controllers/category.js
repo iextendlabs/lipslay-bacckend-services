@@ -74,7 +74,7 @@ const getCategoryBySlug = async (req, res) => {
         rating: avgRating ? Number(avgRating) : null,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
         image: service.image
-          ? `https://images.unsplash.com/photo-1580618672591-eb180b1a973f?q=80&w=1000&auto=format&fit=crop`
+          ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
           : null,
         features: service.features
           ? service.features.split('|').map(f => f.trim())
@@ -90,7 +90,7 @@ const getCategoryBySlug = async (req, res) => {
       title: category.title,
       description: trimWords(category.description, textLimits.categoryDescriptionWords),
       image: category.image
-        ? category.image
+        ? `${urls.baseUrl}${urls.categoryImages}${category.image}`
         : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2070&auto=format&fit=crop",
       services: formattedServices,
       slug: category.slug,
