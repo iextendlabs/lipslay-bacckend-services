@@ -1,3 +1,4 @@
+const urls = require("../config/urls");
 const {
   formattingBookingData,
   getAffiliateId,
@@ -261,7 +262,9 @@ const getOrdersByIds = async (req, res) => {
           name: os.service?.name || null,
           price: parseFloat(os.price).toFixed(2),
           duration: os.duration,
-          image: os.service?.image || null,
+          image: os.service?.image
+            ? `${urls.baseUrl}${urls.serviceImages}${os.service.image}`
+            : null,
         })),
         order_total: parseFloat(order.total_amount).toFixed(2),
         staff_name: order.staff_name ?? null,
@@ -286,9 +289,35 @@ const getOrdersByIds = async (req, res) => {
   }
 };
 
+// Update orders to Pending and payment_method to Cash-On-Delivery
+const updateOrdersToPendingCOD = async (req, res) => {
+  try {
+    const { order_ids } = req.body;
+    if (!Array.isArray(order_ids) || order_ids.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "order_ids must be a non-empty array" });
+    }
+    const [updatedCount] = await Order.update(
+      { status: "Pending", payment_method: "Cash-On-Delivery" },
+      { where: { id: order_ids } }
+    );
+    if (updatedCount === 0) {
+      return res
+        .status(404)
+        .json({ error: "No orders updated. Check order_ids." });
+    }
+    return res.json({ Success: `Order(s) successfully created.` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   listOrders,
   cancelOrder,
   orderTotal,
   getOrdersByIds,
+  updateOrdersToPendingCOD, // export the new function
 };

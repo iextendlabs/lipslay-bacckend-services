@@ -9,7 +9,9 @@ const TimeSlot = sequelize.define('TimeSlot', {
   type: DataTypes.STRING,
   date: DataTypes.DATEONLY,
   status: DataTypes.INTEGER,
-  seat: DataTypes.INTEGER
+  seat: DataTypes.INTEGER,
+  end_time_to_sec: DataTypes.INTEGER,
+  start_time_to_sec: DataTypes.INTEGER,
 }, {
   tableName: 'time_slots',
   timestamps: false

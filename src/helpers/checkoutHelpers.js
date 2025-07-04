@@ -5,6 +5,7 @@ const {
   Coupon,
   Affiliate,
   ServiceOption,
+  StaffDriver, // Add StaffDriver model
 } = require("../models");
 
 // Simulates user creation or lookup
@@ -140,9 +141,18 @@ async function getAffiliateId(code) {
 }
 
 // Stub for driver assignment
-async function getDriverForTimeSlot(staff, date, timeSlotId) {
-  if (staff?.Staff?.getDriverForTimeSlot) {
-    return await staff.Staff.getDriverForTimeSlot(date, timeSlotId);
+async function getDriverForTimeSlot(staff_id, date, timeSlotId) {
+  // Convert date to day name (e.g., 'Monday')
+  const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+  const staffDriver = await StaffDriver.findOne({
+    where: {
+      staff_id: staff_id,
+      day: dayName,
+      time_slot_id: timeSlotId,
+    },
+  });
+  if (staffDriver) {
+    return staffDriver.driver_id;
   }
   return null;
 }

@@ -35,7 +35,7 @@ exports.applyCoupon = async (req, res) => {
       return res.status(400).json({ error: isValid });
     }
 
-    return res.json({ success: true, message: "Coupon applied successfully" });
+    return res.json({ success: "Coupon applied successfully" });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

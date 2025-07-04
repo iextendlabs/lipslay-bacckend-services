@@ -22,11 +22,13 @@ const {
   cancelOrder,
   orderTotal,
   getOrdersByIds,
+  updateOrdersToPendingCOD, // import the new function
 } = require("../controllers/order"); // <-- Add orderTotal
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
 const complaintController = require("../controllers/complaint"); // <-- Add this import
 const holidayController = require("../controllers/holiday");
+const quoteController = require("../controllers/quoteController"); // <-- Add this import
 const couponController = require("../controllers/coupon");
 const zoneController = require("../controllers/zone");
 
@@ -100,6 +102,7 @@ router.post(
 router.get("/holidays", holidayController.listHolidayDates);
 router.post("/coupon", couponController.applyCoupon);
 router.get("/zones", zoneController.listZones);
+router.post("/orderupdate", updateOrdersToPendingCOD);
 // TODO customer Add quote
 // TODO order total
 // TODO zone base pricing

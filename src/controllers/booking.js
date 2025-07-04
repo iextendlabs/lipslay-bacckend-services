@@ -18,7 +18,14 @@ const ShortHoliday = require("../models/ShortHoliday");
 
 const getBookingSlots = async (req, res) => {
   try {
-    const { services, date, area, isAdmin = false, order_id = null, zone_id } = req.body;
+    const {
+      services,
+      date,
+      area,
+      isAdmin = false,
+      order_id = null,
+      zone_id,
+    } = req.body;
 
     // 1. Validate input
     if (!services || !Array.isArray(services)) {
@@ -36,7 +43,7 @@ const getBookingSlots = async (req, res) => {
     // 2. Check for general holiday on the selected date
     const generalHoliday = await Holiday.findOne({ where: { date } });
     if (generalHoliday) {
-      return res.json({
+      return res.status(400).json({
         slots: [],
         message: "There is a holiday and no staff available.",
       });
@@ -45,7 +52,7 @@ const getBookingSlots = async (req, res) => {
     // 3. Find staff zone
     const staffZone = await StaffZone.findByPk(zone_id);
     if (!staffZone) {
-      return res.json({
+      return res.status(400).json({
         slots: [],
         message: "No staff zone found for the specified area.",
       });
@@ -55,7 +62,7 @@ const getBookingSlots = async (req, res) => {
     const zoneStaffIds = zoneStaffMembers.map((staff) => staff.user_id);
 
     if (zoneStaffIds.length === 0) {
-      return res.json({
+      return res.status(400).json({
         slots: [],
         message: "No staff available in the selected area.",
       });
@@ -163,7 +170,7 @@ const getBookingSlots = async (req, res) => {
     );
 
     if (availableStaffIds.length === 0) {
-      return res.json({
+      return res.status(400).json({
         slots: [],
         message: "No staff available for the selected criteria.",
       });
@@ -180,7 +187,7 @@ const getBookingSlots = async (req, res) => {
     const availableTimeSlotIds = slotStaffRelations.map((x) => x.time_slot_id);
 
     if (availableTimeSlotIds.length === 0) {
-      return res.json({
+      return res.status(400).json({
         slots: [],
         message: "No time slots available for the selected criteria.",
       });
@@ -303,7 +310,12 @@ const getBookingSlots = async (req, res) => {
         staff: staffList,
       });
     }
-
+    if (slots.length === 0) {
+      return res.status(400).json({
+        slots: [],
+        message: "No available slots for the selected criteria.",
+      });
+    }
     res.json({ date, area, slots });
   } catch (error) {
     console.error(error);

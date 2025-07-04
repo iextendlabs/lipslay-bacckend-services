@@ -23,7 +23,7 @@ const createOrder = async (req, res) => {
   try {
     const input = req.body;
     const bookingData = input.bookingData;
-    const staffZone = await StaffZone.findByPk(input.zone_id);
+    const staffZone = (await StaffZone.findByPk(input.zone_id)) || {};
 
     let password = ""; // Placeholder for compatibility
     const [customerType, customer_id] = await findOrCreateUser(input);
@@ -135,7 +135,7 @@ const createOrder = async (req, res) => {
       input.payment_method = "Cash-On-Delivery";
 
       input.driver_id = await getDriverForTimeSlot(
-        staff,
+        staff.user_id,
         input.date,
         input.time_slot_id
       );

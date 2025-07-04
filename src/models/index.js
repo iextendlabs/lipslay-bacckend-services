@@ -32,6 +32,7 @@ const Complaint = require("./Complaint");
 const ComplaintChat = require("./ComplaintChat");
 const SubTitle = require("./SubTitle");
 const StaffSubTitle = require("./StaffSubTitle");
+const StaffDriver = require("./StaffDriver");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -271,4 +272,5 @@ module.exports = {
   ComplaintChat,
   SubTitle,
   StaffSubTitle,
+  StaffDriver
 };
