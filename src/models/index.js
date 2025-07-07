@@ -33,6 +33,13 @@ const ComplaintChat = require("./ComplaintChat");
 const SubTitle = require("./SubTitle");
 const StaffSubTitle = require("./StaffSubTitle");
 const StaffDriver = require("./StaffDriver");
+const Quote = require("./Quote");
+const QuoteImage = require("./QuoteImage");
+const QuoteStaff = require("./QuoteStaff");
+const Bid = require("./Bid");
+const BidChat = require("./BidChat");
+const Transaction = require("./Transaction");
+const BidImage = require("./BidImage");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -142,25 +149,21 @@ Staff.belongsToMany(StaffZone, {
   targetKey: "id",
 });
 
-// Add associations for UserAffiliate
 UserAffiliate.belongsTo(User, { foreignKey: "user_id" });
 User.hasOne(UserAffiliate, { foreignKey: "user_id" });
 
 UserAffiliate.belongsTo(Affiliate, { foreignKey: "affiliate_id" });
 Affiliate.hasMany(UserAffiliate, { foreignKey: "affiliate_id" });
 
-// Set up User <-> CustomerProfile association
 User.hasOne(CustomerProfile, { foreignKey: "user_id", as: "customerProfile" });
 CustomerProfile.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
-// Complaint relations
 Complaint.belongsTo(User, { foreignKey: "user_id", as: "user" });
 User.hasMany(Complaint, { foreignKey: "user_id", as: "complaints" });
 
 Complaint.belongsTo(Order, { foreignKey: "order_id", as: "order" });
 Order.hasMany(Complaint, { foreignKey: "order_id", as: "complaints" });
 
-// ComplaintChat relations
 ComplaintChat.belongsTo(User, { foreignKey: "user_id", as: "user" });
 User.hasMany(ComplaintChat, { foreignKey: "user_id", as: "complaintChats" });
 
@@ -187,11 +190,9 @@ SubTitle.belongsToMany(Staff, {
   as: "staffs",
 });
 
-// Order <-> OrderService association
 Order.hasMany(OrderService, { foreignKey: "order_id", as: "order_services" });
 OrderService.belongsTo(Order, { foreignKey: "order_id", as: "order" });
 
-// OrderService <-> Service association
 OrderService.belongsTo(Service, { foreignKey: "service_id", as: "service" });
 Service.hasMany(OrderService, {
   foreignKey: "service_id",
@@ -240,6 +241,75 @@ User.belongsToMany(Coupon, {
 Order.hasMany(CouponHistory, { foreignKey: "order_id" });
 CouponHistory.belongsTo(Order, { foreignKey: "order_id" });
 
+Quote.belongsTo(User, { foreignKey: "user_id" });
+User.hasMany(Quote, { foreignKey: "user_id" });
+
+Quote.belongsTo(Service, { foreignKey: "service_id" });
+Service.hasMany(Quote, { foreignKey: "service_id" });
+
+Quote.belongsTo(Bid, { foreignKey: 'bid_id' });
+Bid.hasMany(Quote, { foreignKey: 'bid_id' });
+
+Quote.belongsTo(Affiliate, { foreignKey: "affiliate_id" });
+Affiliate.hasMany(Quote, { foreignKey: "affiliate_id" });
+
+Quote.belongsToMany(ServiceCategory, {
+  through: "quote_category",
+  foreignKey: "quote_id",
+  otherKey: "category_id",
+  timestamps: false,
+});
+ServiceCategory.belongsToMany(Quote, {
+  through: "quote_category",
+  foreignKey: "category_id",
+  otherKey: "quote_id",
+  timestamps: false,
+});
+
+Quote.belongsToMany(Staff, {
+  through: "quote_staff",
+  foreignKey: "quote_id",
+  otherKey: "staff_id", // this will be user_id
+  targetKey: "user_id", // tell Sequelize to use user_id in Staff
+  timestamps: false,
+});
+
+Staff.belongsToMany(Quote, {
+  through: "quote_staff",
+  foreignKey: "staff_id", // this will be user_id
+  otherKey: "quote_id",
+  sourceKey: "user_id", // tell Sequelize to use user_id in Staff
+  timestamps: false,
+});
+
+Quote.belongsToMany(ServiceOption, {
+  through: "quote_options",
+  foreignKey: "quote_id",
+  otherKey: "option_id",
+  timestamps: false,
+});
+ServiceOption.belongsToMany(Quote, {
+  through: "quote_options",
+  foreignKey: "option_id",
+  otherKey: "quote_id",
+  timestamps: false,
+});
+
+Bid.belongsTo(Quote, { foreignKey: "quote_id" });
+Quote.hasMany(Bid, { foreignKey: "quote_id" });
+
+Bid.belongsTo(Staff, { foreignKey: "staff_id", targetKey: "user_id", as: "staffProfile" });
+Staff.hasMany(Bid, { foreignKey: "staff_id", sourceKey: "user_id", as: "bids" });
+
+Bid.hasMany(BidChat, { foreignKey: "bid_id", as: "chats" });
+BidChat.belongsTo(Bid, { foreignKey: "bid_id", as: "bid" });
+
+Bid.hasMany(BidImage, { foreignKey: "bid_id", as: "images" });
+BidImage.belongsTo(Bid, { foreignKey: "bid_id", as: "bid" });
+
+BidChat.belongsTo(User, { foreignKey: "sender_id", as: "sender" });
+User.hasMany(BidChat, { foreignKey: "sender_id", as: "bid_chats_sent" });
+
 module.exports = {
   ServiceCategory,
   Service,
@@ -272,5 +342,12 @@ module.exports = {
   ComplaintChat,
   SubTitle,
   StaffSubTitle,
-  StaffDriver
+  Quote,
+  QuoteImage,
+  StaffDriver,
+  QuoteStaff,
+  Bid,
+  BidChat,
+  BidImage,
+  Transaction
 };

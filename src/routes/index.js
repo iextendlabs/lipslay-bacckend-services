@@ -31,6 +31,7 @@ const holidayController = require("../controllers/holiday");
 const quoteController = require("../controllers/quoteController"); // <-- Add this import
 const couponController = require("../controllers/coupon");
 const zoneController = require("../controllers/zone");
+const bidController = require("../controllers/bidController"); // <-- Add this import
 
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -43,6 +44,24 @@ const reviewUpload = createUpload({
     return "src/images/review-images";
   },
   defaultPath: "src/images/review-images",
+});
+
+const quoteUpload = createUpload({
+  getPath: (file) => {
+    if (file.fieldname === "images") {
+      return process.env.QUOTE_IMAGE_UPLOAD_PATH || "src/images/quote-images";
+    }
+
+    return "src/images/quote-images";
+  },
+  defaultPath: "src/images/quote-images",
+});
+
+const chatUpload = createUpload({
+  getPath: () =>
+    process.env.QUOTE_BID_IMAGE_UPLOAD_PATH ||
+    "src/images/quote-images/bid-images",
+  defaultPath: "src/images/quote-images/bid-images",
 });
 
 router.get("/home", getHomeData);
@@ -98,6 +117,13 @@ router.post(
   authenticateToken,
   complaintController.createChat
 );
+
+router.post(
+  "/quote/store",
+  quoteUpload.fields([{ name: "images", maxCount: 5 }]),
+  quoteController.store
+);
+
 // Holidays routes
 router.get("/holidays", holidayController.listHolidayDates);
 router.post("/coupon", couponController.applyCoupon);
@@ -110,4 +136,23 @@ router.post("/orderupdate", updateOrdersToPendingCOD);
 // TODO Multiple service selection in cart
 // TODO service options
 // TODO forget password endpoint
+router.get("/quotes", authenticateToken, quoteController.list);
+router.get("/quote/:id", authenticateToken, quoteController.view);
+router.get(
+  "/quote/:id/bids",
+  authenticateToken,
+  bidController.listBidsForQuote
+);
+router.post(
+  "/quote/:id/confirm-bid",
+  authenticateToken,
+  bidController.confirmBid
+);
+router.get("/bid/:id/chat", authenticateToken, bidController.getBidWithChats);
+router.post(
+  "/bid/:id/chat",
+  authenticateToken,
+  chatUpload.single("image"),
+  bidController.createBidChat
+);
 module.exports = router;

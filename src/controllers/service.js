@@ -241,6 +241,7 @@ const getServiceBySlug = async (req, res) => {
     res.json({
       id: service.id,
       name: service.name,
+      quote: service.quote,
       price: formatPrice(service.price),
       discount: formatPrice(service.discount),
       duration: service.duration,
