@@ -60,8 +60,8 @@ const quoteUpload = createUpload({
 const chatUpload = createUpload({
   getPath: () =>
     process.env.QUOTE_BID_IMAGE_UPLOAD_PATH ||
-    "src/images/quote-images/bid-images",
-  defaultPath: "src/images/quote-images/bid-images",
+    "src/images/quote-images/bid-chat-files",
+  defaultPath: "src/images/quote-images/bid-chat-files",
 });
 
 router.get("/home", getHomeData);
