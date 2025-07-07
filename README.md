@@ -23,3 +23,4 @@ DB_NAME=lisplay
 
   REVIEW_QUOTE_IMAGE_UPLOAD_PATH=src/images/quote-images
   
+  QUOTE_BID_IMAGE_UPLOAD_PATH=src/images/quote-images/bid-images
