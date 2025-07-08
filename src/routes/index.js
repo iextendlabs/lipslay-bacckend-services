@@ -32,6 +32,7 @@ const quoteController = require("../controllers/quoteController"); // <-- Add th
 const couponController = require("../controllers/coupon");
 const zoneController = require("../controllers/zone");
 const bidController = require("../controllers/bidController"); // <-- Add this import
+const bookingByGroupController = require("../controllers/bookingbygroup"); // <-- Add this import
 
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -155,4 +156,6 @@ router.post(
   chatUpload.single("image"),
   bidController.createBidChat
 );
+
+router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsByGroup);
 module.exports = router;

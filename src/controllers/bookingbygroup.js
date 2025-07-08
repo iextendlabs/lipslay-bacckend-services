@@ -40,6 +40,11 @@ async function getStaffMapForServices(services) {
       ],
     });
 
+    if (!service) {
+      serviceToStaffMap[serviceId] = [];
+      continue;
+    }
+
     let staffSet = new Set();
     (service.Staffs || []).forEach((s) => staffSet.add(s.user_id));
 
