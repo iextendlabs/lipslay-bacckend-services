@@ -132,6 +132,7 @@ ServiceCategory.belongsToMany(Service, {
   through: ServiceToCategory,
   foreignKey: "category_id",
   otherKey: "service_id",
+  as: 'services', // Add alias for clarity
 });
 
 StaffZone.belongsToMany(Staff, {

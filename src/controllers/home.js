@@ -16,7 +16,17 @@ const getHomeData = async (req, res) => {
   try {
     // SERVICES CAROUSEL (from categories)
     const mainCategories = await ServiceCategory.findAll({
-      where: { parent_id: null, status: 1 }
+      where: { parent_id: null, status: 1 },
+      include: [
+        {
+          model: Service,
+          as: 'services',
+          through: { attributes: [] },
+          where: { status: 1 },
+          required: false,
+          attributes: ['id', 'name', 'price', 'duration', 'description', 'image', 'slug']
+        }
+      ]
     });
     const categoryCarousel = mainCategories.map(cat => ({
       id: cat.id,
@@ -29,14 +39,12 @@ const getHomeData = async (req, res) => {
       href: cat.slug,
     }));
 
-    // Helper to get featured services for a category
-    const getFeatured = async (cat) => {
-      if (!cat) return [];
-      const services = await Service.findAll({
-        where: { category_id: cat.id, status: 1 },
-        limit: 4
-      });
-      return await Promise.all(services.map(async s => {
+    // Build featuredServices for all main categories with category info
+    const featuredServices = [];
+    for (const cat of mainCategories) {
+      // Use eager-loaded services, limit to 4
+      const services = (cat.services || []).slice(0, 4);
+      const formatted = await Promise.all(services.map(async s => {
         const reviews = await Review.findAll({ where: { service_id: s.id } });
         const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1) : null;
         return {
@@ -51,16 +59,10 @@ const getHomeData = async (req, res) => {
           slug: cat.slug + '/' + s.slug,
         };
       }));
-    };
-
-    // Build featuredServices for all main categories with category info
-    const featuredServices = [];
-    for (const cat of mainCategories) {
-      const services = await getFeatured(cat);
       featuredServices.push({
         name: cat.title,
         slug: cat.slug,
-        services
+        services: formatted
       });
     }
 

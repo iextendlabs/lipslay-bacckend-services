@@ -36,29 +36,33 @@ const getCategoryBySlug = async (req, res) => {
       return res.status(400).json({ error: 'Missing or empty category slug.' });
     }
 
-    // Fetch category by slug, include subcategories
+    // Fetch category by slug, include subcategories and services via relation
     const category = await ServiceCategory.findOne({
       where: { slug, status: 1 },
-      include: [{
-        model: ServiceCategory,
-        as: 'childCategories',
-        where: { status: 1 },
-        required: false
-      }]
+      include: [
+        {
+          model: ServiceCategory,
+          as: 'childCategories',
+          where: { status: 1 },
+          required: false
+        },
+        {
+          model: Service,
+          as: 'services', // Specify alias to match association
+          through: { attributes: [] }, // Use many-to-many relation, exclude join table data
+          where: { status: 1 },
+          required: false,
+          attributes: ['id', 'name', 'price', 'duration', 'description', 'image', 'slug']
+        }
+      ]
     });
 
     if (!category) {
       return res.status(404).json({ error: 'Category not found.' });
     }
 
-    // Fetch all services in this category
-    const services = await Service.findAll({
-      where: { category_id: category.id, status: 1 },
-      attributes: ['id', 'name', 'price', 'duration', 'description', 'image', 'slug']
-    });
-
     // For each service, calculate average rating and format response
-    const formattedServices = await Promise.all(services.map(async (service) => {
+    const formattedServices = await Promise.all((category.services || []).map(async (service) => {
       const reviews = await Review.findAll({
         where: { service_id: service.id },
         attributes: ['rating']
