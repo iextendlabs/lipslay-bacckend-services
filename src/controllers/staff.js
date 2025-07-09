@@ -19,7 +19,7 @@ const { trimWords } = require("../utils/trimWords");
  * GET /staff?staff=slug_or_id
  * Returns staff details, related services, categories, description, reviews, etc.
  */
-exports.getStaffDetail = async (req, res, next) => {
+const getStaffDetail = async (req, res, next) => {
   try {
     const { staff } = req.query;
     if (!staff) {
@@ -170,3 +170,58 @@ exports.getStaffDetail = async (req, res, next) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+const getAllStaff = async (req, res) => {
+  try {
+    let staffMembers = await Staff.findAll({
+      where: { status: 1 },
+      include: [
+        {
+          model: require("../models").User,
+          attributes: ["name"],
+        },
+        {
+          model: SubTitle,
+          as: "subTitles",
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+        {
+          model: Review,
+          as: "reviews",
+        },
+      ]
+    });
+
+    staffMembers = staffMembers.map((staff) => {
+      let avg_review_rating = null;
+      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+        avg_review_rating = (
+          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+          staff.reviews.length
+        ).toFixed(1);
+      }
+      return {
+        id: staff.id,
+        name: staff.User ? staff.User.name : "",
+        specialties:
+          staff.subTitles && staff.subTitles.length > 0
+            ? staff.subTitles.map((st) => st.name).slice(0, 6)
+            : staff.sub_title
+            ? [staff.sub_title]
+            : ["Stylist"],
+        rating: avg_review_rating ? Number(avg_review_rating) : null,
+        charges: staff.charges,
+        image: staff.image
+          ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
+          : `${urls.baseUrl}${urls.staffImages}default.jpg`,
+      };
+    });
+
+    res.json({ staff: staffMembers });
+  } catch (err) {
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
+};
+
+module.exports = { getStaffDetail, getAllStaff };

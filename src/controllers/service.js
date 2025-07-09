@@ -37,7 +37,14 @@ const getServiceBySlug = async (req, res) => {
       include: [
         {
           model: Staff,
-          attributes: ["id", "image", "sub_title", "phone", "status"],
+          attributes: [
+            "id",
+            "image",
+            "sub_title",
+            "phone",
+            "status",
+            "charges",
+          ],
           through: { attributes: [] },
           include: [
             { model: User, attributes: ["name", "email"] },
@@ -50,9 +57,7 @@ const getServiceBySlug = async (req, res) => {
             {
               model: Review,
               as: "reviews",
-              attributes: [
-                "rating"
-              ],
+              attributes: ["rating"],
             },
           ],
         },
@@ -170,9 +175,29 @@ const getServiceBySlug = async (req, res) => {
         include: [
           {
             model: Staff,
-            attributes: ["id", "image", "sub_title", "phone", "status"],
+            attributes: [
+              "id",
+              "image",
+              "sub_title",
+              "phone",
+              "status",
+              "charges",
+            ],
             through: { attributes: [] },
-            include: [{ model: User, attributes: ["name", "email"] }],
+            include: [
+              { model: User, attributes: ["name", "email"] },
+              {
+                model: SubTitle,
+                as: "subTitles",
+                attributes: ["name"],
+                through: { attributes: [] },
+              },
+              {
+                model: Review,
+                as: "reviews",
+                attributes: ["rating"],
+              },
+            ],
           },
         ],
       });
@@ -193,13 +218,6 @@ const getServiceBySlug = async (req, res) => {
     });
 
     const staffMembers = Array.from(staffMap.values()).map((staff) => {
-      // Get sub_titles as array of names, then join with '/'
-      let subTitleStr = null;
-      if (Array.isArray(staff.subTitles) && staff.subTitles.length > 0) {
-        subTitleStr = staff.subTitles.map((st) => st.name).join(" / ");
-      }
-
-      // Safely calculate average review rating
       let avg_review_rating = null;
       if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
         avg_review_rating = (
@@ -207,33 +225,20 @@ const getServiceBySlug = async (req, res) => {
           staff.reviews.length
         ).toFixed(1);
       }
-
-      // Get up to 3 category names, or if none, up to 3 service names
-      let specialties = [];
-      if (Array.isArray(staff.ServiceCategories) && staff.ServiceCategories.length > 0) {
-        specialties = staff.ServiceCategories.slice(0, 3).map(cat => cat.title);
-      } else if (Array.isArray(staff.Services) && staff.Services.length > 0) {
-        specialties = staff.Services.slice(0, 3).map(svc => svc.name);
-      } else if (staff.specialties) {
-        specialties = staff.specialties.split(",").map((s) => s.trim()).slice(0, 3);
-      } else {
-        specialties = ["Cuts", "Color"];
-      }
-
       return {
         id: staff.id,
-        name: staff.User?.name || null,
-        email: staff.User?.email || null,
+        name: staff.User ? staff.User.name : "",
+        specialties:
+          staff.subTitles && staff.subTitles.length > 0
+            ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
+            : staff.sub_title
+            ? [staff.sub_title]
+            : ["Stylist"],
+        rating: avg_review_rating ? Number(avg_review_rating) : null,
+        charges: staff.charges,
         image: staff.image
           ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : null,
-        about: staff.about,
-        sub_title: subTitleStr,
-        phone: staff.phone,
-        status: staff.status,
-        specialties,
-        rating: avg_review_rating || 0,
-        charges: staff.charges || 0,
+          : `${urls.baseUrl}${urls.staffImages}default.jpg`,
       };
     });
 

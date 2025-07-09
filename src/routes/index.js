@@ -15,7 +15,7 @@ const {
 const { getBookingSlots } = require("../controllers/booking");
 const { getInfo } = require("../controllers/info"); // <-- Import the new controller
 const { listFaqs } = require("../controllers/faq"); // <-- Import the FAQ controller
-const { getStaffDetail } = require("../controllers/staff"); // <-- Import staff controller
+const { getStaffDetail, getAllStaff } = require("../controllers/staff"); // <-- Import staff controller
 const userController = require("../controllers/user"); // <-- Import user controller
 const {
   listOrders,
@@ -74,7 +74,9 @@ router.post("/booking/slots", getBookingSlots);
 router.get("/info", getInfo); // <-- Use the controller here
 router.get("/faqs", listFaqs); // <-- Add the FAQ route
 router.post("/order", createOrder);
-router.get("/staff", getStaffDetail); // <-- Add staff detail endpoint
+router.get("/staff", getStaffDetail);
+router.get("/staff/all", getAllStaff); // <-- Add this line for getting all staff
+ // <-- Add staff detail endpoint
 // login and registration controller
 router.post("/login", userController.login); // <-- Add login endpoint
 router.post("/register", userController.register); // <-- Add registration endpoint
@@ -159,3 +161,4 @@ router.post(
 
 router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsByGroup);
 module.exports = router;
+// TODO reviews average rating store in service and staff

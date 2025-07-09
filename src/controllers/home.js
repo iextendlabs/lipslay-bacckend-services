@@ -4,13 +4,14 @@ const {
   Staff,
   Faq,
   User,
-  Review
-} = require('../models');
-const urls = require('../config/urls');
-const { formatPrice } = require('../utils/price');
-const { trimWords } = require('../utils/trimWords');
-const textLimits = require('../config/textLimits');
-const stripHtmlTags = require('../utils/stripHtmlTags');
+  Review,
+  SubTitle,
+} = require("../models");
+const urls = require("../config/urls");
+const { formatPrice } = require("../utils/price");
+const { trimWords } = require("../utils/trimWords");
+const textLimits = require("../config/textLimits");
+const stripHtmlTags = require("../utils/stripHtmlTags");
 
 const getHomeData = async (req, res) => {
   try {
@@ -20,15 +21,23 @@ const getHomeData = async (req, res) => {
       include: [
         {
           model: Service,
-          as: 'services',
+          as: "services",
           through: { attributes: [] },
           where: { status: 1 },
           required: false,
-          attributes: ['id', 'name', 'price', 'duration', 'description', 'image', 'slug']
-        }
-      ]
+          attributes: [
+            "id",
+            "name",
+            "price",
+            "duration",
+            "description",
+            "image",
+            "slug",
+          ],
+        },
+      ],
     });
-    const categoryCarousel = mainCategories.map(cat => ({
+    const categoryCarousel = mainCategories.map((cat) => ({
       id: cat.id,
       title: cat.title,
       description: cat.description || "",
@@ -44,60 +53,91 @@ const getHomeData = async (req, res) => {
     for (const cat of mainCategories) {
       // Use eager-loaded services, limit to 4
       const services = (cat.services || []).slice(0, 4);
-      const formatted = await Promise.all(services.map(async s => {
-        const reviews = await Review.findAll({ where: { service_id: s.id } });
-        const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1) : null;
-        return {
-          name: s.name,
-          price: formatPrice(s.price),
-          rating: avgRating ? Number(avgRating) : null,
-          image: s.image
-            ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-            : `${urls.baseUrl}${urls.serviceImages}default.jpg`,
-          description: trimWords(stripHtmlTags(s.description), textLimits.serviceDescriptionWords),
-          duration: s.duration,
-          slug: cat.slug + '/' + s.slug,
-        };
-      }));
+      const formatted = await Promise.all(
+        services.map(async (s) => {
+          const reviews = await Review.findAll({ where: { service_id: s.id } });
+          const avgRating = reviews.length
+            ? (
+                reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+                reviews.length
+              ).toFixed(1)
+            : null;
+          return {
+            name: s.name,
+            price: formatPrice(s.price),
+            rating: avgRating ? Number(avgRating) : null,
+            image: s.image
+              ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
+              : `${urls.baseUrl}${urls.serviceImages}default.jpg`,
+            description: trimWords(
+              stripHtmlTags(s.description),
+              textLimits.serviceDescriptionWords
+            ),
+            duration: s.duration,
+            slug: cat.slug + "/" + s.slug,
+          };
+        })
+      );
       featuredServices.push({
         name: cat.title,
         slug: cat.slug,
-        services: formatted
+        services: formatted,
       });
     }
 
     // STAFF MEMBERS (example: top 5 staff)
     let staffMembers = await Staff.findAll({
       where: { status: 1 },
-      include: [{ model: User, attributes: ['name'] }],
-      limit: 5
+      include: [
+        { model: User, attributes: ["name"] },
+        {
+          model: SubTitle,
+          as: "subTitles",
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+        { model: Review, as: "reviews" },
+      ],
+      limit: 5,
     });
-    staffMembers = staffMembers.map(staff => ({
-      id: staff.id,
-      name: staff.User ? staff.User.name : "",
-      role: staff.sub_title || "Stylist",
-      experience: staff.experience || "5+ years",
-      rating: staff.rating || 4.7,
-      specialties: staff.specialties ? staff.specialties.split(',').map(s => s.trim()) : ["Cuts", "Color"],
-      image: staff.image
-        ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-        : `${urls.baseUrl}${urls.staffImages}default.jpg`
-    }));
+    staffMembers = staffMembers.map((staff) => {
+      let avg_review_rating = null;
+      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+        avg_review_rating = (
+          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+          staff.reviews.length
+        ).toFixed(1);
+      }
+      return {
+        id: staff.id,
+        name: staff.User ? staff.User.name : "",
+        specialties:
+          staff.subTitles && staff.subTitles.length > 0
+            ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
+            : staff.sub_title
+            ? [staff.sub_title]
+            : ["Stylist"],
+        rating: avg_review_rating ? Number(avg_review_rating) : null,
+        charges: staff.charges,
+        image: staff.image
+          ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
+          : `${urls.baseUrl}${urls.staffImages}default.jpg`,
+      };
+    });
 
     // TESTIMONIALS (latest 3 reviews)
     const testimonialsRaw = await Review.findAll({
-      order: [['id', 'DESC']],
-      limit: 3
+      order: [["id", "DESC"]],
+      limit: 3,
     });
-    const testimonials = testimonialsRaw.map(r => ({
+    const testimonials = testimonialsRaw.map((r) => ({
       name: r.user_name || "Anonymous",
       rating: r.rating,
       comment: r.content,
       image: r.video
         ? `${urls.baseUrl}${urls.userImages}${r.video}`
-        : `${urls.baseUrl}${urls.userImages}default.jpg`
+        : `${urls.baseUrl}${urls.userImages}default.jpg`,
     }));
-
 
     // APP PROMOTION (static)
     const appPromotion = {
@@ -105,24 +145,25 @@ const getHomeData = async (req, res) => {
       description: "Book, manage, and track your appointments easily.",
       image: `${urls.baseUrl}/images/app-promo.jpg`,
       appStoreLink: "https://appstore.com/yourapp",
-      playStoreLink: "https://play.google.com/store/apps/details?id=yourapp"
+      playStoreLink: "https://play.google.com/store/apps/details?id=yourapp",
     };
 
     // FAQS (latest 3)
     const faqsRaw = await Faq.findAll({
       where: { status: 1 },
-      order: [['id', 'DESC']],
-      limit: 3
+      order: [["id", "DESC"]],
+      limit: 3,
     });
-    const faqs = faqsRaw.map(f => ({
+    const faqs = faqsRaw.map((f) => ({
       question: f.question,
-      answer: f.answer
+      answer: f.answer,
     }));
 
     // NEWSLETTER (static)
     const newsletter = {
       title: "Stay Updated",
-      description: "Subscribe to our newsletter for the latest offers and updates."
+      description:
+        "Subscribe to our newsletter for the latest offers and updates.",
     };
 
     res.json({
@@ -132,11 +173,11 @@ const getHomeData = async (req, res) => {
       testimonials,
       appPromotion,
       faqs,
-      newsletter
+      newsletter,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
