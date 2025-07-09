@@ -31,10 +31,8 @@ const createOrder = async (req, res) => {
     input.customer_name = input.name;
     input.customer_email = input.email;
     input.driver_status = "Pending";
-    input.number =
-      input.number_country_code + String(input.number).replace(/^0+/, "");
-    input.whatsapp =
-      input.whatsapp_country_code + String(input.whatsapp).replace(/^0+/, "");
+    input.number = input.number;
+    input.whatsapp = input.whatsapp;
 
     const [formattedBookings, groupedBookingOption, groupedBooking] =
       await formattingBookingData(bookingData);

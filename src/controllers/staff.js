@@ -136,6 +136,7 @@ const getStaffDetail = async (req, res, next) => {
       id: staffObj.id,
       staff_id: staffObj.id,
       user_id: staffObj.user_id,
+      location: staffObj.location,
       image: staffObj.image
         ? `${urls.baseUrl}${urls.staffImages}${staffObj.image}`
         : `${urls.baseUrl}${urls.staffImages}default.jpg`,

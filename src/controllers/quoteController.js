@@ -58,6 +58,7 @@ const store = async (req, res) => {
   }
 
   // Get service and categories
+
   const service = await Service.findByPk(input.service_id, {
     include: ["ServiceCategories"],
   });
@@ -97,9 +98,8 @@ const store = async (req, res) => {
     const categoryStaffIds = staffByCategory.map((s) => s.user_id);
     staffIds = Array.from(new Set([...staffIds, ...categoryStaffIds]));
   }
-
   // Find staff zone by name
-  const staffZone = await StaffZone.findOne({ where: { name: input.zone } });
+  const staffZone = await StaffZone.findByPk(input.zone);
   if (!staffZone) {
     return res.status(400).json({
       message: "No staff zone found for the specified area.",
@@ -142,6 +142,7 @@ const store = async (req, res) => {
   const now = new Date();
   input.created_at = now;
   input.updated_at = now;
+  input.zone = staffZone.name;
   const quote = await Quote.create(input);
 
   if (req.files && req.files.images && req.files.images.length > 0) {

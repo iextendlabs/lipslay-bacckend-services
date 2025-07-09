@@ -134,9 +134,6 @@ const getHomeData = async (req, res) => {
       name: r.user_name || "Anonymous",
       rating: r.rating,
       comment: r.content,
-      image: r.video
-        ? `${urls.baseUrl}${urls.userImages}${r.video}`
-        : `${urls.baseUrl}${urls.userImages}default.jpg`,
     }));
 
     // APP PROMOTION (static)
