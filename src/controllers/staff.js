@@ -8,6 +8,8 @@ const {
   SubTitle,
   Setting,
   Order,
+  StaffImage, // Added
+  StaffYoutubeVideo, // Added
 } = require("../models");
 const { formatPrice } = require("../utils/price");
 const stripHtmlTags = require("../utils/stripHtmlTags");
@@ -57,6 +59,14 @@ exports.getStaffDetail = async (req, res, next) => {
         {
           model: require("../models").User,
           attributes: ["name"],
+        },
+        {
+          model: StaffImage,
+          as: "images",
+        },
+        {
+          model: StaffYoutubeVideo,
+          as: "youtubeVideos",
         },
       ],
     });
@@ -115,6 +125,13 @@ exports.getStaffDetail = async (req, res, next) => {
       href: cat.slug,
     }));
 
+    const images = (staffObj.images || [])
+      .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : null))
+      .filter(Boolean);
+    const youtubeVideos = (staffObj.youtubeVideos || [])
+      .map((v) => v.youtube_video)
+      .filter(Boolean);
+
     const output = {
       id: staffObj.id,
       staff_id: staffObj.id,
@@ -141,6 +158,8 @@ exports.getStaffDetail = async (req, res, next) => {
       services,
       categories,
       reviews: staffObj.reviews || [],
+      images, // Added
+      youtube_videos: youtubeVideos, // Added
     };
 
     res.json(output);

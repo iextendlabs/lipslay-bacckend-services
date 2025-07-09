@@ -40,6 +40,8 @@ const Bid = require("./Bid");
 const BidChat = require("./BidChat");
 const Transaction = require("./Transaction");
 const BidImage = require("./BidImage");
+const StaffImage = require("./StaffImage");
+const StaffYoutubeVideo = require("./StaffYoutubeVideo");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -311,6 +313,12 @@ BidImage.belongsTo(Bid, { foreignKey: "bid_id", as: "bid" });
 BidChat.belongsTo(User, { foreignKey: "sender_id", as: "sender" });
 User.hasMany(BidChat, { foreignKey: "sender_id", as: "bid_chats_sent" });
 
+Staff.hasMany(StaffImage, { foreignKey: "staff_id", sourceKey: "user_id", as: "images" });
+StaffImage.belongsTo(Staff, { foreignKey: "staff_id", targetKey: "user_id" });
+
+Staff.hasMany(StaffYoutubeVideo, { foreignKey: "staff_id", sourceKey: "user_id", as: "youtubeVideos" });
+StaffYoutubeVideo.belongsTo(Staff, { foreignKey: "staff_id", targetKey: "user_id" });
+
 module.exports = {
   ServiceCategory,
   Service,
@@ -350,5 +358,7 @@ module.exports = {
   Bid,
   BidChat,
   BidImage,
-  Transaction
+  Transaction,
+  StaffImage,
+  StaffYoutubeVideo
 };
