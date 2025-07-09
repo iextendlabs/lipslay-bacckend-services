@@ -7,6 +7,11 @@ const Information = sequelize.define('Information', {
     primaryKey: true,
     autoIncrement: true
   },
+  slug: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false
@@ -18,6 +23,12 @@ const Information = sequelize.define('Information', {
   description: {
     type: DataTypes.TEXT,
     allowNull: false
+  },
+  status: {
+    type: DataTypes.TINYINT,
+    allowNull: false,
+    defaultValue: 1,
+    comment: '1=enable, 0=disable'
   },
   created_at: {
     type: DataTypes.DATE,
