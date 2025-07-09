@@ -224,9 +224,6 @@ async function getSlotsForGroup({
     const orderStaffIds = orders.map((o) => o.service_staff_id);
     slotStaffIds = slotStaffIds.filter((id) => !orderStaffIds.includes(id));
 
-    const seatPerSlot = slot.seat || 1;
-    const availableSeats = slotStaffIds.length * seatPerSlot - orderStaffIds.length;
-
     const assignedStaff = await Staff.findAll({
       where: { user_id: slotStaffIds },
       attributes: ["id", "image", "sub_title", "phone", "status"],
@@ -247,8 +244,6 @@ async function getSlotsForGroup({
       name: slot.name,
       time_start: slot.time_start,
       time_end: slot.time_end,
-      available: availableSeats > 0,
-      seatAvailable: availableSeats,
       staff: staffList,
     });
   }

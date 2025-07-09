@@ -6,6 +6,7 @@ const {
   User,
   Review,
   SubTitle,
+  Setting, // Add Setting model
 } = require("../models");
 const urls = require("../config/urls");
 const { formatPrice } = require("../utils/price");
@@ -163,6 +164,12 @@ const getHomeData = async (req, res) => {
         "Subscribe to our newsletter for the latest offers and updates.",
     };
 
+    // Get WhatsApp Number from settings
+    const whatsappSetting = await Setting.findOne({
+      where: { key: "WhatsApp Number For Customer App" },
+    });
+    const whatsappNumber = whatsappSetting ? whatsappSetting.value : null;
+
     res.json({
       categoryCarousel,
       featuredServices, // now an array of { name, slug, services }
@@ -171,6 +178,7 @@ const getHomeData = async (req, res) => {
       appPromotion,
       faqs,
       newsletter,
+      whatsappNumber, // Add WhatsApp number to response
     });
   } catch (error) {
     console.error(error);

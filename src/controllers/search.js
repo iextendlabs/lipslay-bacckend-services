@@ -34,6 +34,7 @@ const searchServices = async (req, res) => {
         id: service.id,
         name: service.name,
         category: null,
+        quote: service.quote ?true : false,
         price: formatPrice(service.price),
         duration: service.duration,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
@@ -85,6 +86,7 @@ const searchServices = async (req, res) => {
         return {
           id: service.id,
           name: service.name,
+          quote: service.quote ?true : false,
           category: null,
           price: formatPrice(service.price),
           duration: service.duration,
