@@ -19,6 +19,7 @@ const getHomeData = async (req, res) => {
     // SERVICES CAROUSEL (from categories)
     const mainCategories = await ServiceCategory.findAll({
       where: { parent_id: null, status: 1, feature: 1 },
+      order: [["sort", "ASC"]], // Order by sort ascending
       include: [
         {
           model: Service,
