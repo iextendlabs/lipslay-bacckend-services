@@ -25,6 +25,7 @@ const Service = sequelize.define(
       allowNull: false,
     },
     status: DataTypes.STRING,
+    feature: DataTypes.INTEGER,
     type: DataTypes.STRING,
     quote: DataTypes.INTEGER,
     pipelineId: DataTypes.BIGINT.UNSIGNED,

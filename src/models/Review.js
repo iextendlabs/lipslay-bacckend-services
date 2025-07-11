@@ -6,6 +6,7 @@ const Review = sequelize.define('Review', {
   id: { type: DataTypes.BIGINT.UNSIGNED, primaryKey: true, autoIncrement: true },
   staff_id: DataTypes.BIGINT.UNSIGNED,
   service_id: DataTypes.BIGINT.UNSIGNED,
+  feature: DataTypes.INTEGER,
   content: DataTypes.TEXT,
   rating: DataTypes.INTEGER,
   created_at: DataTypes.DATE,

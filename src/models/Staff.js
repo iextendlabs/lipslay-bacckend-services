@@ -10,6 +10,7 @@ const Staff = sequelize.define('Staff', {
   image: DataTypes.STRING,
   charges: DataTypes.STRING,
   phone: DataTypes.STRING,
+  feature: DataTypes.INTEGER,
   status: DataTypes.TINYINT,
   instagram: DataTypes.STRING,
   facebook: DataTypes.STRING,

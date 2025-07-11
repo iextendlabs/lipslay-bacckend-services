@@ -18,13 +18,13 @@ const getHomeData = async (req, res) => {
   try {
     // SERVICES CAROUSEL (from categories)
     const mainCategories = await ServiceCategory.findAll({
-      where: { parent_id: null, status: 1 },
+      where: { parent_id: null, status: 1, feature: 1 },
       include: [
         {
           model: Service,
           as: "services",
           through: { attributes: [] },
-          where: { status: 1 },
+          where: { status: 1, feature: 1 },
           required: false,
           attributes: [
             "id",
@@ -88,7 +88,7 @@ const getHomeData = async (req, res) => {
 
     // STAFF MEMBERS (example: top 5 staff)
     let staffMembers = await Staff.findAll({
-      where: { status: 1 },
+      where: { status: 1, feature: 1 },
       include: [
         { model: User, attributes: ["name"] },
         {
@@ -128,6 +128,7 @@ const getHomeData = async (req, res) => {
 
     // TESTIMONIALS (latest 3 reviews)
     const testimonialsRaw = await Review.findAll({
+      where: { feature: 1 },
       order: [["id", "DESC"]],
       limit: 3,
     });
@@ -148,7 +149,7 @@ const getHomeData = async (req, res) => {
 
     // FAQS (latest 3)
     const faqsRaw = await Faq.findAll({
-      where: { status: 1 },
+      where: { status: 1, feature: 1 },
       order: [["id", "DESC"]],
       limit: 3,
     });

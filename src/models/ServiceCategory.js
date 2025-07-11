@@ -17,6 +17,7 @@ const ServiceCategory = sequelize.define(
     image: DataTypes.STRING,
     description: DataTypes.TEXT,
     status: DataTypes.STRING,
+    feature: DataTypes.INTEGER,
     icon: DataTypes.STRING,
     type: DataTypes.STRING,
     meta_title: DataTypes.STRING,
