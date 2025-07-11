@@ -251,8 +251,8 @@ const getServiceBySlug = async (req, res) => {
       discount: formatPrice(service.discount),
       duration: service.duration,
       rating: avgRating ? Number(avgRating) : null,
-      description: trimWords(striptags(service.description), 100),
-      longDescription: trimWords(service.long_description, 100),
+      description: trimWords(striptags(service.short_description), 100),
+      longDescription: trimWords(service.description, 100),
       image: service.image
         ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
         : null,

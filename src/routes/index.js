@@ -33,6 +33,7 @@ const couponController = require("../controllers/coupon");
 const zoneController = require("../controllers/zone");
 const bidController = require("../controllers/bidController"); // <-- Add this import
 const bookingByGroupController = require("../controllers/bookingbygroup"); // <-- Add this import
+const { getInformationPages } = require("../controllers/informationPages"); // <-- Import the information pages controller
 
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -160,5 +161,8 @@ router.post(
 );
 
 router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsByGroup);
+router.get("/information-pages", getInformationPages); // <-- Add the new endpoint for information pages
 module.exports = router;
 // TODO reviews average rating store in service and staff
+// TODO feature setting in services staff category review faqs
+// TODO feature setting on bottom category review faqs
