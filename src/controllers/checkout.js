@@ -9,6 +9,7 @@ const {
   OrderTotal,
   OrderService,
   StaffZone,
+  CustomerProfile,
 } = require("../models");
 const {
   findOrCreateUser,
@@ -150,10 +151,10 @@ const createOrder = async (req, res) => {
         payment_method: input.payment_method || "Cash-On-Delivery",
         status: input.status,
         affiliate_id: input.affiliate_id,
-        buildingName: input.buildingName,
+        buildingName: input.building_name,
         area: input.area,
         landmark: input.landmark,
-        flatVilla: input.flatVilla,
+        flatVilla: input.flat_or_villa,
         street: input.street,
         city: input.city,
         district: input.district,
@@ -222,6 +223,29 @@ const createOrder = async (req, res) => {
       }
     }
 
+    if(input.save_data){
+      await User.update(
+        {
+          number: input.number,
+          whatsapp: input.whatsapp,
+          gender: input.gender
+        },
+        { where: { id: input.customer_id } }
+      );
+      
+      if(!input.selected_address_id){
+        await CustomerProfile.create({
+          user_id: input.customer_id,
+          buildingName: input.building_name,
+          area: input.area,
+          landmark: input.landmark,
+          flatVilla: input.flat_or_villa,
+          street: input.street,
+          city: input.city,
+          district: input.district
+        });
+      }
+    }
     res.json({
       customer_type: customerType,
       order_ids,

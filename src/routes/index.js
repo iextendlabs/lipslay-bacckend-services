@@ -133,12 +133,7 @@ router.get("/holidays", holidayController.listHolidayDates);
 router.post("/coupon", couponController.applyCoupon);
 router.get("/zones", zoneController.listZones);
 router.post("/orderupdate", updateOrdersToPendingCOD);
-// TODO customer Add quote
-// TODO order total
 // TODO zone base pricing
-// TODO zone selection
-// TODO Multiple service selection in cart
-// TODO service options
 // TODO forget password endpoint
 router.get("/quotes", authenticateToken, quoteController.list);
 router.get("/quote/:id", authenticateToken, quoteController.view);
@@ -164,5 +159,3 @@ router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsB
 router.get("/information-pages", getInformationPages); // <-- Add the new endpoint for information pages
 module.exports = router;
 // TODO reviews average rating store in service and staff
-// TODO feature setting in services staff category review faqs
-// TODO feature setting on bottom category review faqs

@@ -18,6 +18,8 @@ async function findOrCreateUser(input) {
       name: input.name,
       email: input.email,
       number: input.number,
+      whatsapp: input.whatsapp,
+      gender: input.gender,
       password: "dummy_password_123", // Assign a dummy password
     });
     return ["new", user.id];
