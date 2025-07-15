@@ -4,7 +4,7 @@ const { StaffZone, Currency } = require("../models");
 async function formatCurrency(amount, zoneId = null, extraCharges = false) {
     try {
         let symbol = 'AED';
-        let modifiedAmount = amount;
+        let modifiedAmount = Number(amount);
 
         if (zoneId) {
             const staffZone = await StaffZone.findOne({
@@ -17,9 +17,9 @@ async function formatCurrency(amount, zoneId = null, extraCharges = false) {
                 if (staffZone.currency) {
                     symbol = staffZone.currency.symbol;
                     const currencyRate = parseFloat(staffZone.currency.rate);
-                    modifiedAmount = (amount + charges) * currencyRate;
+                    modifiedAmount = (Number(amount) + charges) * currencyRate;
                 } else {
-                    modifiedAmount = amount + charges;
+                    modifiedAmount = Number(amount) + charges;
                 }
             }
         }
