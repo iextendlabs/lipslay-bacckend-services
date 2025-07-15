@@ -125,9 +125,8 @@ router.post(
   quoteController.store
 );
 
-
 router.get("/holidays", holidayController.listHolidayDates);
-router.post("/coupon", couponController.applyCoupon);
+router.post("/coupon", couponController.applyBookingCoupon);
 router.get("/zones", zoneController.listZones);
 router.post("/orderupdate", updateOrdersToPendingCOD);
 
@@ -153,6 +152,7 @@ router.post(
 
 router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsByGroup);
 router.get("/information-pages", getInformationPages);
+router.get('/user-coupons', couponController.getUserCoupons);
+router.post('/apply-coupon', couponController.applyCoupon);
 module.exports = router;
 // TODO reviews average rating store in service and staff
-// TODO customer coupon list
