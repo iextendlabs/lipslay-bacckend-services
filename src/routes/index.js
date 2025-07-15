@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middleware/authMiddleware");
 const createUpload = require("../utils/upload");
-
-// Import controller functions
 const { getHomeData } = require("../controllers/home");
 const { searchServices } = require("../controllers/search");
 const { getServiceBySlug } = require("../controllers/service");
@@ -13,28 +11,29 @@ const {
   listMainCategories,
 } = require("../controllers/category");
 const { getBookingSlots } = require("../controllers/booking");
-const { getInfo } = require("../controllers/info"); // <-- Import the new controller
-const { listFaqs } = require("../controllers/faq"); // <-- Import the FAQ controller
-const { getStaffDetail, getAllStaff } = require("../controllers/staff"); // <-- Import staff controller
-const userController = require("../controllers/user"); // <-- Import user controller
+const { getInfo } = require("../controllers/info");
+const { listFaqs } = require("../controllers/faq");
+const { getStaffDetail, getAllStaff } = require("../controllers/staff");
+const userController = require("../controllers/user");
 const {
   listOrders,
   cancelOrder,
   orderTotal,
   getOrdersByIds,
-  updateOrdersToPendingCOD, // import the new function
-} = require("../controllers/order"); // <-- Add orderTotal
+  updateOrdersToPendingCOD,
+} = require("../controllers/order");
 const stripeRoutes = require("./stripe");
 const reviewController = require("../controllers/review");
-const complaintController = require("../controllers/complaint"); // <-- Add this import
+const complaintController = require("../controllers/complaint");
 const holidayController = require("../controllers/holiday");
-const quoteController = require("../controllers/quoteController"); // <-- Add this import
+const quoteController = require("../controllers/quoteController");
 const couponController = require("../controllers/coupon");
 const zoneController = require("../controllers/zone");
-const bidController = require("../controllers/bidController"); // <-- Add this import
-const bookingByGroupController = require("../controllers/bookingbygroup"); // <-- Add this import
-const { getInformationPages } = require("../controllers/informationPages"); // <-- Import the information pages controller
-
+const bidController = require("../controllers/bidController");
+const bookingByGroupController = require("../controllers/bookingbygroup");
+const { getInformationPages } = require("../controllers/informationPages");
+const { formatCurrency } = require("../utils/currency");
+// TODO forget password endpoint
 const reviewUpload = createUpload({
   getPath: (file) => {
     if (file.fieldname === "images") {
@@ -72,15 +71,14 @@ router.get("/service", getServiceBySlug);
 router.get("/category", getCategoryBySlug);
 router.get("/categories", listMainCategories);
 router.post("/booking/slots", getBookingSlots);
-router.get("/info", getInfo); // <-- Use the controller here
-router.get("/faqs", listFaqs); // <-- Add the FAQ route
+router.get("/info", getInfo);
+router.get("/faqs", listFaqs);
 router.post("/order", createOrder);
 router.get("/staff", getStaffDetail);
-router.get("/staff/all", getAllStaff); // <-- Add this line for getting all staff
- // <-- Add staff detail endpoint
-// login and registration controller
-router.post("/login", userController.login); // <-- Add login endpoint
-router.post("/register", userController.register); // <-- Add registration endpoint
+router.get("/staff/all", getAllStaff);
+
+router.post("/login", userController.login);
+router.post("/register", userController.register);
 
 router.get("/me", authenticateToken, (req, res) => {
   // req.user was set by middleware
@@ -90,10 +88,9 @@ router.get("/me", authenticateToken, (req, res) => {
   });
 });
 
-// GET /orders - List orders for the authenticated user
-router.get("/orders", authenticateToken, listOrders); // <-- Use the new controller for listing orders
-router.get("/getprofile", authenticateToken, userController.getProfile); // <-- Use the new controller for listing orders
-router.put("/setprofile", authenticateToken, userController.setProfile); // <-- Add setprofile endpoint
+router.get("/orders", authenticateToken, listOrders);
+router.get("/getprofile", authenticateToken, userController.getProfile);
+router.put("/setprofile", authenticateToken, userController.setProfile);
 router.get("/addresses", authenticateToken, userController.getAddresses);
 router.post("/saveaddress", authenticateToken, userController.saveAddress);
 router.post("/deleteaddress", authenticateToken, userController.deleteAddress);
@@ -112,7 +109,7 @@ router.post(
   ]),
   reviewController.addReview
 );
-// Complaints routes
+
 router.post("/complaints", authenticateToken, complaintController.create);
 router.get("/complaints/:id", authenticateToken, complaintController.view);
 router.get("/complaints", authenticateToken, complaintController.list);
@@ -128,13 +125,12 @@ router.post(
   quoteController.store
 );
 
-// Holidays routes
+
 router.get("/holidays", holidayController.listHolidayDates);
 router.post("/coupon", couponController.applyCoupon);
 router.get("/zones", zoneController.listZones);
 router.post("/orderupdate", updateOrdersToPendingCOD);
-// TODO zone base pricing
-// TODO forget password endpoint
+
 router.get("/quotes", authenticateToken, quoteController.list);
 router.get("/quote/:id", authenticateToken, quoteController.view);
 router.get(
@@ -156,6 +152,7 @@ router.post(
 );
 
 router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsByGroup);
-router.get("/information-pages", getInformationPages); // <-- Add the new endpoint for information pages
+router.get("/information-pages", getInformationPages);
 module.exports = router;
 // TODO reviews average rating store in service and staff
+// TODO customer coupon list

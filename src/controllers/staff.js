@@ -11,9 +11,9 @@ const {
   StaffImage, // Added
   StaffYoutubeVideo, // Added
 } = require("../models");
-const { formatPrice } = require("../utils/price");
 const stripHtmlTags = require("../utils/stripHtmlTags");
 const { trimWords } = require("../utils/trimWords");
+const { formatCurrency } = require("../utils/currency");
 
 /**
  * GET /staff?staff=slug_or_id
@@ -21,6 +21,7 @@ const { trimWords } = require("../utils/trimWords");
  */
 const getStaffDetail = async (req, res, next) => {
   try {
+    const zone_id = req.query.zoneId ?? null;
     const { staff } = req.query;
     if (!staff) {
       return res.status(400).json({ error: "Missing staff parameter" });
@@ -100,7 +101,8 @@ const getStaffDetail = async (req, res, next) => {
           : null;
         return {
           name: s.name,
-          price: formatPrice(s.price),
+          price: await formatCurrency(s.price ?? 0, zone_id, true),
+          discount: s.discount != null && s.discount > 0 ? await formatCurrency(s.discount, zone_id, true) : null,
           rating: avgRating ? Number(avgRating) : null,
           image: s.image
             ? `${urls.baseUrl}${urls.serviceImages}${s.image}`

@@ -13,7 +13,7 @@ const {
 const { Op } = require("sequelize");
 const striptags = require("striptags");
 const urls = require("../config/urls");
-const { formatPrice } = require("../utils/price");
+const { formatCurrency } = require("../utils/currency");
 
 // Utility to trim text
 const trimWords = (text, maxWords = 100) => {
@@ -26,6 +26,7 @@ const trimWords = (text, maxWords = 100) => {
 
 const getServiceBySlug = async (req, res) => {
   try {
+    const zone_id = req.query.zoneId ?? null;
     const slug = req.query.query;
     if (!slug || slug.trim() === "") {
       return res.status(400).json({ error: "Missing or empty service slug." });
@@ -130,29 +131,29 @@ const getServiceBySlug = async (req, res) => {
       (img) => `${urls.baseUrl}${urls.serviceGallery}${img.image}`
     );
 
-    const addOns = (service.AddOns || []).map((addon) => ({
+    const addOns = await Promise.all((service.AddOns || []).map(async (addon) => ({
       id: addon.id,
       name: addon.name,
-      price: formatPrice(addon.price),
-      discount: addon.discount,
+      price: await formatCurrency(addon.price ?? 0, zone_id, true),
+      discount: addon.discount != null && addon.discount > 0 ? await formatCurrency(addon.discount, zone_id, true) : null,
       duration: addon.duration,
       image: addon.image
         ? `${urls.baseUrl}${urls.serviceImages}${addon.image}`
         : null,
       slug: addon.slug,
-    }));
+    })));
 
-    const packages = (service.Packages || []).map((pkg) => ({
+    const packages = await Promise.all((service.Packages || []).map(async (pkg) => ({
       id: pkg.id,
       name: pkg.name,
-      price: formatPrice(pkg.price),
+      price: await formatCurrency(pkg.price ?? 0, zone_id, true),
       discount: pkg.discount,
       duration: pkg.duration,
       image: pkg.image
         ? `${urls.baseUrl}${urls.serviceImages}${pkg.image}`
         : null,
       slug: pkg.slug,
-    }));
+    })));
 
     const avgRating = reviews.length
       ? (
@@ -242,13 +243,22 @@ const getServiceBySlug = async (req, res) => {
       };
     });
 
+    // Format options with currency
+    const formattedOptions = await Promise.all((options || []).map(async (opt) => ({
+      id: opt.id,
+      option_name: opt.option_name,
+      option_price: await formatCurrency(opt.option_price ?? 0, zone_id, false),
+      option_duration: opt.option_duration,
+      image: opt.image,
+    })));
+
     // --- Send Response ---
     res.json({
       id: service.id,
       name: service.name,
       quote: service.quote ? true : false,
-      price: formatPrice(service.price),
-      discount: formatPrice(service.discount),
+      price: await formatCurrency(service.price ?? 0, zone_id, true),
+      discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
       duration: service.duration,
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.short_description), 100),
@@ -269,7 +279,7 @@ const getServiceBySlug = async (req, res) => {
         image: r.video ? `${urls.baseUrl}${urls.userImages}${r.video}` : null,
       })),
       staffMembers,
-      options,
+      options: formattedOptions,
       addOns,
       packages,
     });

@@ -14,8 +14,10 @@ const {
   User,
   Coupon,
   ServiceCategory,
+  Currency,
 } = require("../models");
 const { Op } = require("sequelize");
+const { formatCurrency } = require("../utils/currency");
 // List orders for the authenticated user
 const listOrders = async (req, res) => {
   try {
@@ -24,7 +26,7 @@ const listOrders = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     const orders = await Order.findAll({
-      where: { customer_id: userId },
+      where: { customer_id: userId, status: { [Op.ne]: 'Draft' } },
       order: [["created_at", "DESC"]],
       include: [
         {
@@ -191,11 +193,27 @@ const orderTotal = async (req, res) => {
     }
 
     res.json({
-      "Staff Charges": all_staff_charges.toFixed(2),
-      "Transport Charges": all_transport_charges.toFixed(2),
-      "Service Total": all_sub_total.toFixed(2),
-      "Coupon Discount": all_coupon_discount.toFixed(2),
-      Total: all_total_amount.toFixed(2),
+      "Staff Charges": await formatCurrency(
+        all_staff_charges,
+        input.zone_id,
+        false
+      ),
+      "Transport Charges": await formatCurrency(
+        all_transport_charges,
+        input.zone_id,
+        false
+      ),
+      "Service Total": await formatCurrency(
+        all_sub_total,
+        input.zone_id,
+        false
+      ),
+      "Coupon Discount": await formatCurrency(
+        all_coupon_discount,
+        input.zone_id,
+        false
+      ),
+      Total: await formatCurrency(all_total_amount, input.zone_id, false),
     });
   } catch (err) {
     res.status(400).json({
@@ -208,6 +226,11 @@ const orderTotal = async (req, res) => {
 const getOrdersByIds = async (req, res) => {
   try {
     const ordersParam = req.query.orders;
+    const zone_id = req.query.zoneId;
+    const staffZone =
+      (await StaffZone.findByPk(zone_id, {
+        include: [{ model: Currency, as: "currency" }],
+      })) || {};
     if (!ordersParam) {
       return res.status(400).json({ error: "orders parameter is required" });
     }
@@ -240,48 +263,68 @@ const getOrdersByIds = async (req, res) => {
 
     let allOrdersTotal = 0;
 
-    const ordersWithDetails = orders.map((order) => {
-      // Combine address fields
-      const addressParts = [
-        order.buildingName,
-        order.flatVilla,
-        order.street,
-        order.area,
-        order.city,
-        order.district,
-        order.landmark,
-      ].filter(Boolean);
+    // Use Promise.all for async formatCurrency in order_services
+    const ordersWithDetails = await Promise.all(
+      orders.map(async (order) => {
+        // Combine address fields
+        const addressParts = [
+          order.buildingName,
+          order.flatVilla,
+          order.street,
+          order.area,
+          order.city,
+          order.district,
+          order.landmark,
+        ].filter(Boolean);
 
-      const address = addressParts.join(", ");
+        const address = addressParts.join(", ");
 
-      allOrdersTotal += parseFloat(order.total_amount);
+        allOrdersTotal += parseFloat(order.total_amount);
 
-      return {
-        id: order.id,
-        order_services: (order.order_services || []).map((os) => ({
-          name: os.service?.name || null,
-          price: parseFloat(os.price).toFixed(2),
-          duration: os.duration,
-          image: os.service?.image
-            ? `${urls.baseUrl}${urls.serviceImages}${os.service.image}`
-            : null,
-        })),
-        order_total: parseFloat(order.total_amount).toFixed(2),
-        staff_name: order.staff_name ?? null,
-        time_slot: order.time_slot_value ?? null,
-        booking_date: order.date ?? null,
-        customer: {
-          name: order.customer_name,
-          email: order.customer_email,
-          phone: order.number,
-          address: address,
-        },
-      };
-    });
+        return {
+          id: order.id,
+          order_services: await Promise.all(
+            (order.order_services || []).map(async (os) => ({
+              name: os.service?.name || null,
+              price: await formatCurrency(os.price ?? 0, zone_id, false),
+              duration: os.duration,
+              image: os.service?.image
+                ? `${urls.baseUrl}${urls.serviceImages}${os.service.image}`
+                : null,
+            }))
+          ),
+          staff_name: order.staff_name ?? null,
+          time_slot: order.time_slot_value ?? null,
+          booking_date: order.date ?? null,
+          customer: {
+            name: order.customer_name,
+            email: order.customer_email,
+            phone: order.number,
+            address: address,
+          },
+        };
+      })
+    );
+
+    // Format total amount and return symbol and amount separately
+    let totalAmountFormatted = allOrdersTotal;
+    let currency = "aed";
+    let currencySymbol = "AED";
+    if (staffZone.currency) {
+      currency = staffZone.currency.name.toLowerCase();
+      currencySymbol = staffZone.currency.symbol;
+      totalAmountFormatted = allOrdersTotal * staffZone.currency.rate;
+    }
+    // Round to 2 decimals
+    totalAmountFormatted = parseFloat(totalAmountFormatted).toFixed(2);
 
     res.json({
       orders: ordersWithDetails,
-      all_orders_total: allOrdersTotal.toFixed(2),
+      Total: {
+        currency: currency,
+        currencySymbol: currencySymbol,
+        amount: totalAmountFormatted
+      },
     });
   } catch (error) {
     console.error(error);

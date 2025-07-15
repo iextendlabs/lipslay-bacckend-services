@@ -9,13 +9,14 @@ const {
   Setting, // Add Setting model
 } = require("../models");
 const urls = require("../config/urls");
-const { formatPrice } = require("../utils/price");
 const { trimWords } = require("../utils/trimWords");
 const textLimits = require("../config/textLimits");
 const stripHtmlTags = require("../utils/stripHtmlTags");
+const { formatCurrency } = require("../utils/currency");
 
 const getHomeData = async (req, res) => {
   try {
+    const zone_id = req.query.zoneId ?? null;
     // SERVICES CAROUSEL (from categories)
     const mainCategories = await ServiceCategory.findAll({
       where: { parent_id: null, status: 1, feature: 1 },
@@ -31,6 +32,7 @@ const getHomeData = async (req, res) => {
             "id",
             "name",
             "price",
+            "discount",
             "duration",
             "description",
             "image",
@@ -66,7 +68,8 @@ const getHomeData = async (req, res) => {
             : null;
           return {
             name: s.name,
-            price: formatPrice(s.price),
+            price: await formatCurrency(s.price ?? 0, zone_id, true),
+            discount: s.discount != null && s.discount > 0 ? await formatCurrency(s.discount, zone_id, true) : null,
             rating: avgRating ? Number(avgRating) : null,
             image: s.image
               ? `${urls.baseUrl}${urls.serviceImages}${s.image}`

@@ -1,12 +1,13 @@
 const { Op, literal } = require('sequelize');
 const { Service, ServiceCategory, ServiceOption } = require('../models');
 const striptags = require('striptags');
-const { formatPrice } = require('../utils/price');
 const textLimits = require('../config/textLimits');
 const { trimWords } = require('../utils/trimWords');
+const { formatCurrency } = require("../utils/currency");
 
 const searchServices = async (req, res) => {
   try {
+    const zone_id = req.query.zoneId ?? null;
     const q = req.query.q;
     const id = req.query.id;
 
@@ -34,8 +35,9 @@ const searchServices = async (req, res) => {
         id: service.id,
         name: service.name,
         category: null,
-        quote: service.quote ?true : false,
-        price: formatPrice(service.price),
+        quote: service.quote ? true : false,
+        price: await formatCurrency(service.price ?? 0, zone_id, true),
+        discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
         duration: service.duration,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
         image: 'https://test.lipslay.com/service-images/' + service.image,
@@ -86,9 +88,10 @@ const searchServices = async (req, res) => {
         return {
           id: service.id,
           name: service.name,
-          quote: service.quote ?true : false,
+          quote: service.quote ? true : false,
           category: null,
-          price: formatPrice(service.price),
+          price: await formatCurrency(service.price ?? 0, zone_id, true),
+          discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
           duration: service.duration,
           description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
           image: 'https://test.lipslay.com/service-images/' + service.image,

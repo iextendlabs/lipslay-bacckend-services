@@ -2,8 +2,8 @@ const { ServiceCategory, Service, Review } = require('../models');
 const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const urls = require('../config/urls'); // Make sure this contains baseUrl
-const { formatPrice } = require('../utils/price');
 const { trimWords } = require('../utils/trimWords');
+const { formatCurrency } = require('../utils/currency');
 
 function formatCategory(cat, urls) {
   return {
@@ -32,6 +32,7 @@ function formatCategory(cat, urls) {
 const getCategoryBySlug = async (req, res) => {
   try {
     const slug = req.query.category;
+    const zone_id = req.query.zoneId ?? null;
     if (!slug || slug.trim() === '') {
       return res.status(400).json({ error: 'Missing or empty category slug.' });
     }
@@ -52,7 +53,7 @@ const getCategoryBySlug = async (req, res) => {
           through: { attributes: [] }, // Use many-to-many relation, exclude join table data
           where: { status: 1 },
           required: false,
-          attributes: ['id', 'name', 'price', 'duration', 'description', 'image', 'slug']
+          attributes: ['id', 'name', 'price', 'discount', 'duration', 'description', 'image', 'slug']
         }
       ]
     });
@@ -73,16 +74,14 @@ const getCategoryBySlug = async (req, res) => {
       return {
         id: service.id,
         name: service.name,
-        price: formatPrice(service.price),
+        price: await formatCurrency(service.price ?? 0, zone_id, true),
+        discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
         duration: service.duration,
         rating: avgRating ? Number(avgRating) : null,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
         image: service.image
           ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
           : null,
-        features: service.features
-          ? service.features.split('|').map(f => f.trim())
-          : ["Consultation included", "Premium products", "Style guarantee"],
         slug: category.slug + '/' + service.slug
       };
     }));

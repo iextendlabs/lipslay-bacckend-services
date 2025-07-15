@@ -10,6 +10,7 @@ const {
   OrderService,
   StaffZone,
   CustomerProfile,
+  Currency,
 } = require("../models");
 const {
   findOrCreateUser,
@@ -18,13 +19,17 @@ const {
   getDriverForTimeSlot,
 } = require("../helpers/checkoutHelpers");
 const urls = require("../config/urls");
+const { formatCurrency } = require("../utils/currency");
 
 // POST /order - Create a new order
 const createOrder = async (req, res) => {
   try {
     const input = req.body;
     const bookingData = input.bookingData;
-    const staffZone = (await StaffZone.findByPk(input.zone_id)) || {};
+    // Fetch staffZone with currency relation
+    const staffZone = (await StaffZone.findByPk(input.zone_id, {
+      include: [{ model: Currency, as: 'currency' }]
+    })) || {};
 
     let password = ""; // Placeholder for compatibility
     const [customerType, customer_id] = await findOrCreateUser(input);
@@ -142,6 +147,16 @@ const createOrder = async (req, res) => {
       input.latitude = input.latitude || "";
       input.longitude = input.longitude || "";
 
+      // Get currency info from staffZone
+      let currency_symbol = null;
+      let currency_rate = null;
+      if (staffZone.currency) {
+        currency_symbol = staffZone.currency.symbol;
+        currency_rate = staffZone.currency.rate;
+      }
+      input.currency_symbol = currency_symbol;
+      input.currency_rate = currency_rate;
+
       // Only include fields that exist in the Order model/table
       const orderData = {
         customer_id: input.customer_id,
@@ -249,7 +264,7 @@ const createOrder = async (req, res) => {
     res.json({
       customer_type: customerType,
       order_ids,
-      Total: all_total_amount.toFixed(2),
+      Total: await formatCurrency(all_total_amount, input.zone_id),
     });
   } catch (error) {
     console.error(error);
