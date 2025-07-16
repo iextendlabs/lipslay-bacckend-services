@@ -94,12 +94,12 @@ router.put("/setprofile", authenticateToken, userController.setProfile);
 router.get("/addresses", authenticateToken, userController.getAddresses);
 router.post("/saveaddress", authenticateToken, userController.saveAddress);
 router.post("/deleteaddress", authenticateToken, userController.deleteAddress);
-
-router.use(stripeRoutes);
-
+router.post("/orderupdate", updateOrdersToPendingCOD);
 router.post("/order/cancel", authenticateToken, cancelOrder);
 router.post("/gettotals", orderTotal);
 router.get("/getorders", getOrdersByIds);
+
+router.use(stripeRoutes);
 
 router.post(
   "/review",
@@ -119,17 +119,15 @@ router.post(
   complaintController.createChat
 );
 
+router.get("/holidays", holidayController.listHolidayDates);
+router.post("/coupon", couponController.applyBookingCoupon);
+router.get("/zones", zoneController.listZones);
+
 router.post(
   "/quote/store",
   quoteUpload.fields([{ name: "images", maxCount: 5 }]),
   quoteController.store
 );
-
-router.get("/holidays", holidayController.listHolidayDates);
-router.post("/coupon", couponController.applyBookingCoupon);
-router.get("/zones", zoneController.listZones);
-router.post("/orderupdate", updateOrdersToPendingCOD);
-
 router.get("/quotes", authenticateToken, quoteController.list);
 router.get("/quote/:id", authenticateToken, quoteController.view);
 router.get(

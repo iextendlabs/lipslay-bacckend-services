@@ -14,6 +14,7 @@ const {
 const stripHtmlTags = require("../utils/stripHtmlTags");
 const { trimWords } = require("../utils/trimWords");
 const { formatCurrency } = require("../utils/currency");
+const cache = require("../utils/cache");
 
 /**
  * GET /staff?staff=slug_or_id
@@ -26,6 +27,10 @@ const getStaffDetail = async (req, res, next) => {
     if (!staff) {
       return res.status(400).json({ error: "Missing staff parameter" });
     }
+
+    const cacheKey = `staff_detail_${staff}_${zone_id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
 
     let showSocialLinks = true;
     const socialLinksSetting = await Setting.findOne({
@@ -164,7 +169,7 @@ const getStaffDetail = async (req, res, next) => {
       images, // Added
       youtube_videos: youtubeVideos, // Added
     };
-
+    cache.set(cacheKey, output);
     res.json(output);
   } catch (err) {
     if (err.name && err.name.startsWith("Sequelize")) {
@@ -176,6 +181,10 @@ const getStaffDetail = async (req, res, next) => {
 
 const getAllStaff = async (req, res) => {
   try {
+    const cacheKey = 'all_staff';
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
     let staffMembers = await Staff.findAll({
       where: { status: 1 },
       include: [
@@ -221,7 +230,9 @@ const getAllStaff = async (req, res) => {
       };
     });
 
-    res.json({ staff: staffMembers });
+    const result = { staff: staffMembers };
+    cache.set(cacheKey, result);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: "Server error", details: err.message });
   }

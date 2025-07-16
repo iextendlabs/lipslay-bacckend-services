@@ -14,9 +14,16 @@ const textLimits = require("../config/textLimits");
 const stripHtmlTags = require("../utils/stripHtmlTags");
 const { formatCurrency } = require("../utils/currency");
 
+const cache = require('../utils/cache');
+
 const getHomeData = async (req, res) => {
   try {
     const zone_id = req.query.zoneId ?? null;
+    const cacheKey = `homeData_${zone_id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
     // SERVICES CAROUSEL (from categories)
     const mainCategories = await ServiceCategory.findAll({
       where: { parent_id: null, status: 1, feature: 1 },
@@ -175,7 +182,7 @@ const getHomeData = async (req, res) => {
     });
     const whatsappNumber = whatsappSetting ? whatsappSetting.value : null;
 
-    res.json({
+    const result = {
       categoryCarousel,
       featuredServices, // now an array of { name, slug, services }
       staffMembers,
@@ -184,7 +191,9 @@ const getHomeData = async (req, res) => {
       faqs,
       newsletter,
       whatsappNumber, // Add WhatsApp number to response
-    });
+    };
+    cache.set(cacheKey, result);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

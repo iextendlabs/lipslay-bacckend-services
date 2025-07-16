@@ -1,4 +1,5 @@
 const { ServiceCategory, Service, Review } = require('../models');
+const cache = require('../utils/cache');
 const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const urls = require('../config/urls'); // Make sure this contains baseUrl
@@ -37,6 +38,10 @@ const getCategoryBySlug = async (req, res) => {
       return res.status(400).json({ error: 'Missing or empty category slug.' });
     }
 
+    const cacheKey = `category_${slug}_${zone_id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
     // Fetch category by slug, include subcategories and services via relation
     const category = await ServiceCategory.findOne({
       where: { slug, status: 1 },
@@ -49,8 +54,8 @@ const getCategoryBySlug = async (req, res) => {
         },
         {
           model: Service,
-          as: 'services', // Specify alias to match association
-          through: { attributes: [] }, // Use many-to-many relation, exclude join table data
+          as: 'services',
+          through: { attributes: [] },
           where: { status: 1 },
           required: false,
           attributes: ['id', 'name', 'price', 'discount', 'duration', 'description', 'image', 'slug']
@@ -89,7 +94,7 @@ const getCategoryBySlug = async (req, res) => {
     // Format subcategories
     const subcategories = (category.childCategories || []).map(sub => (formatCategory(sub, urls)));
 
-    res.json({
+    const result = {
       title: category.title,
       description: trimWords(category.description, textLimits.categoryDescriptionWords),
       image: category.image
@@ -98,7 +103,9 @@ const getCategoryBySlug = async (req, res) => {
       services: formattedServices,
       slug: category.slug,
       subcategories
-    });
+    };
+    cache.set(cacheKey, result);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
@@ -107,6 +114,10 @@ const getCategoryBySlug = async (req, res) => {
 
 const listMainCategories = async (req, res) => {
   try {
+    const cacheKey = 'main_categories';
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
     const categories = await ServiceCategory.findAll({
       where: { parent_id: null, status: 1 },
       include: [{
@@ -118,7 +129,7 @@ const listMainCategories = async (req, res) => {
     });
 
     const formatted = categories.map(cat => (formatCategory(cat, urls)));
-
+    cache.set(cacheKey, formatted);
     res.json(formatted);
   } catch (error) {
     console.error(error);
