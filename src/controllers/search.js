@@ -4,6 +4,7 @@ const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require("../utils/currency");
+const { baseUrl, serviceImages } = require('../config/urls');
 
 const searchServices = async (req, res) => {
   try {
@@ -40,7 +41,7 @@ const searchServices = async (req, res) => {
         discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
         duration: service.duration,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
-        image: 'https://test.lipslay.com/service-images/' + service.image,
+        image: baseUrl + serviceImages + service.image,
         keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
         slug: service.ServiceCategories && service.ServiceCategories[0] ? service.ServiceCategories[0].slug + '/' + service.slug : service.slug,
         rating: service.rating || null,
@@ -94,7 +95,7 @@ const searchServices = async (req, res) => {
           discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
           duration: service.duration,
           description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
-          image: 'https://test.lipslay.com/service-images/' + service.image,
+          image: baseUrl + serviceImages + service.image,
           keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
           slug: firstCategory.slug + '/' + service.slug,
           rating: service.rating || null,
