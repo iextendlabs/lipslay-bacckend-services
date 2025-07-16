@@ -31,8 +31,8 @@ const couponController = require("../controllers/coupon");
 const zoneController = require("../controllers/zone");
 const bidController = require("../controllers/bidController");
 const bookingByGroupController = require("../controllers/bookingbygroup");
-const { getInformationPages } = require("../controllers/informationPages");
 const { formatCurrency } = require("../utils/currency");
+const { getLayoutData } = require("../controllers/layoutData");
 // TODO forget password endpoint
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -151,7 +151,7 @@ router.post(
 );
 
 router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsByGroup);
-router.get("/information-pages", getInformationPages);
+router.get("/layout-data", getLayoutData);
 router.get('/user-coupons', couponController.getUserCoupons);
 router.post('/apply-coupon', couponController.applyCoupon);
 module.exports = router;

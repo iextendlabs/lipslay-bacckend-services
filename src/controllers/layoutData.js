@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 
 // Endpoint: GET /information-pages
 // Returns top and bottom information pages, and service categories for bottom
-const getInformationPages = async (req, res) => {
+const getLayoutData = async (req, res) => {
   try {
     // Top info pages: position = 'Top Menu' or 'Both', status = 1
     const topPages = await Information.findAll({
@@ -34,4 +34,4 @@ const getInformationPages = async (req, res) => {
   }
 };
 
-module.exports = { getInformationPages };
+module.exports = { getLayoutData };
