@@ -12,8 +12,8 @@ function formatCategory(cat, urls) {
     title: cat.title,
     description: cat.description || "",
     image: cat.image
-      ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
-      : `${urls.baseUrl}/images/services/default.jpg`,
+      ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
+      : `${urls.baseUrl}default.png`,
     popular: !!cat.popular,
     href: `${cat.slug}`,
     subcategories: (cat.childCategories || []).map(sub => ({
@@ -21,8 +21,8 @@ function formatCategory(cat, urls) {
       title: sub.title,
       description: sub.description || "",
       image: sub.image
-        ? `${urls.baseUrl}/img/service-category-images/${sub.image}`
-        : `${urls.baseUrl}/images/services/default.jpg`,
+        ? `${urls.baseUrl}${urls.categoryImages}${sub.image}`
+        : `${urls.baseUrl}default.png`,
       href: sub.slug,
       popular: !!sub.popular
     })),

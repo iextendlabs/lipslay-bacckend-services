@@ -139,7 +139,7 @@ const getServiceBySlug = async (req, res) => {
       duration: addon.duration,
       image: addon.image
         ? `${urls.baseUrl}${urls.serviceImages}${addon.image}`
-        : null,
+        : `${urls.baseUrl}default.png`,
       slug: addon.slug,
     })));
 
@@ -151,7 +151,7 @@ const getServiceBySlug = async (req, res) => {
       duration: pkg.duration,
       image: pkg.image
         ? `${urls.baseUrl}${urls.serviceImages}${pkg.image}`
-        : null,
+        : `${urls.baseUrl}default.png`,
       slug: pkg.slug,
     })));
 
@@ -239,7 +239,7 @@ const getServiceBySlug = async (req, res) => {
         charges: staff.charges,
         image: staff.image
           ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : `${urls.baseUrl}${urls.staffImages}default.jpg`,
+          : `${urls.baseUrl}default.png`,
       };
     });
 
@@ -265,7 +265,7 @@ const getServiceBySlug = async (req, res) => {
       longDescription: trimWords(service.description, 100),
       image: service.image
         ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
-        : null,
+        : `${urls.baseUrl}default.png`,
       gallery,
       faqs: faqs.map((f) => ({
         question: trimWords(f.question, 100),
@@ -276,7 +276,7 @@ const getServiceBySlug = async (req, res) => {
         rating: r.rating,
         date: r.created_at ? r.created_at.toISOString().split("T")[0] : null,
         comment: trimWords(r.content, 100),
-        image: r.video ? `${urls.baseUrl}${urls.userImages}${r.video}` : null,
+        image: null,
       })),
       staffMembers,
       options: formattedOptions,

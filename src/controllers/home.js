@@ -53,8 +53,8 @@ const getHomeData = async (req, res) => {
       title: cat.title,
       description: cat.description || "",
       image: cat.image
-        ? `${urls.baseUrl}/img/service-category-images/${cat.image}`
-        : `${urls.baseUrl}/images/services/default.jpg`,
+        ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
+        : `${urls.baseUrl}default.png`,
       popular: !!cat.popular,
       href: cat.slug,
     }));
@@ -80,7 +80,7 @@ const getHomeData = async (req, res) => {
             rating: avgRating ? Number(avgRating) : null,
             image: s.image
               ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-              : `${urls.baseUrl}${urls.serviceImages}default.jpg`,
+              : `${urls.baseUrl}default.png`,
             description: trimWords(
               stripHtmlTags(s.description),
               textLimits.serviceDescriptionWords
@@ -133,7 +133,7 @@ const getHomeData = async (req, res) => {
         charges: staff.charges,
         image: staff.image
           ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : `${urls.baseUrl}${urls.staffImages}default.jpg`,
+          : `${urls.baseUrl}default.png`,
       };
     });
 
@@ -148,15 +148,6 @@ const getHomeData = async (req, res) => {
       rating: r.rating,
       comment: r.content,
     }));
-
-    // APP PROMOTION (static)
-    const appPromotion = {
-      title: "Download Our App",
-      description: "Book, manage, and track your appointments easily.",
-      image: `${urls.baseUrl}/images/app-promo.jpg`,
-      appStoreLink: "https://appstore.com/yourapp",
-      playStoreLink: "https://play.google.com/store/apps/details?id=yourapp",
-    };
 
     // FAQS (latest 3)
     const faqsRaw = await Faq.findAll({
@@ -187,7 +178,6 @@ const getHomeData = async (req, res) => {
       featuredServices, // now an array of { name, slug, services }
       staffMembers,
       testimonials,
-      appPromotion,
       faqs,
       newsletter,
       whatsappNumber, // Add WhatsApp number to response
