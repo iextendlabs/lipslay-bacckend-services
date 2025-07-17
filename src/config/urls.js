@@ -1,5 +1,5 @@
 module.exports = {
-  baseUrl: "https://test.lipslay.com",
+  baseUrl: "https://partner.lipslay.com/",
   serviceImages: "/service-images/",
   serviceGallery: "/images/services/",
   categoryImages: "/service-category-images/",
