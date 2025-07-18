@@ -90,6 +90,17 @@ const confirmBid = async (req, res) => {
     quote.status = "Complete";
     await quote.save();
 
+    // Send notification to staff user whose bid was accepted
+    const staffUser = await User.findByPk(bid.staff_id);
+    if (staffUser) {
+      await staffUser.notifyOnMobile(
+        `Bid Chat on quote#${bid.quote_id}`,
+        "Congratulations! Your bid has been accepted by the customer.",
+        null,
+        "Staff App"
+      );
+    }
+
     // Find the QuoteStaff record for this quote and staff
     const staffQuote = await QuoteStaff.findOne({
       where: { quote_id: quoteId, staff_id: bid.staff_id },
@@ -234,6 +245,23 @@ const createBidChat = async (req, res) => {
       created_at: new Date(),
       updated_at: new Date(),
     });
+
+    // Send notification to staff user
+    if (bid && bid.staff_id) {
+      const staffUser = await User.findByPk(bid.staff_id);
+      if (staffUser) {
+        const notifyMessage = chat.file
+          ? "There is a file uploaded"
+          : chat.message;
+        await staffUser.notifyOnMobile(
+          `Bid Chat on quote#${bid.quote_id}`,
+          notifyMessage,
+          null,
+          "Staff App"
+        );
+      }
+    }
+
     return res.json({
       success: true,
       message: "Chat message sent",

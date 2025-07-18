@@ -26,7 +26,7 @@ const listOrders = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     const orders = await Order.findAll({
-      where: { customer_id: userId, status: { [Op.ne]: 'Draft' } },
+      where: { customer_id: userId, status: { [Op.ne]: "Draft" } },
       order: [["created_at", "DESC"]],
       include: [
         {
@@ -323,7 +323,7 @@ const getOrdersByIds = async (req, res) => {
       Total: {
         currency: currency,
         currencySymbol: currencySymbol,
-        amount: totalAmountFormatted
+        amount: totalAmountFormatted,
       },
     });
   } catch (error) {
@@ -350,6 +350,46 @@ const updateOrdersToPendingCOD = async (req, res) => {
         .status(404)
         .json({ error: "No orders updated. Check order_ids." });
     }
+
+    // Notify staff and driver for each updated order
+    const updatedOrders = await Order.findAll({ where: { id: order_ids } });
+    for (const order of updatedOrders) {
+      // Check if order date is current date
+      const orderDate = order.date ? new Date(order.date) : null;
+      const today = new Date();
+      const isToday = orderDate &&
+        orderDate.getDate() === today.getDate() &&
+        orderDate.getMonth() === today.getMonth() &&
+        orderDate.getFullYear() === today.getFullYear();
+
+      if (isToday) {
+        // Staff notification
+        if (order.service_staff_id) {
+          const staffUser = await User.findByPk(order.service_staff_id);
+          if (staffUser) {
+            await staffUser.notifyOnMobile(
+              "Order",
+              "New Order Generated.",
+              order.id,
+              "Staff App"
+            );
+          }
+        }
+        // Driver notification
+        if (order.driver_id) {
+          const driverUser = await User.findByPk(order.driver_id);
+          if (driverUser) {
+            await driverUser.notifyOnMobile(
+              "Order",
+              "New Order Generated.",
+              order.id,
+              "Driver App"
+            );
+          }
+        }
+      }
+    }
+
     return res.json({ Success: `Order(s) successfully created.` });
   } catch (error) {
     console.error(error);

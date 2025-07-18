@@ -201,6 +201,16 @@ const store = async (req, res) => {
         created_at: now,
         updated_at: now,
       });
+      // Send notification to staff user
+      const staffUser = await User.findByPk(staff.user_id);
+      if (staffUser) {
+        await staffUser.notifyOnMobile(
+          "Quote",
+          `A new quote has been generated with ID: ${quote.id}`,
+          null,
+          "Staff App"
+        );
+      }
     }
   }
 
