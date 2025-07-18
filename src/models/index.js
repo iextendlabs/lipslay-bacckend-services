@@ -44,6 +44,7 @@ const StaffImage = require("./StaffImage");
 const StaffYoutubeVideo = require("./StaffYoutubeVideo");
 const Currency = require("./Currency");
 const Role = require("./Role");
+const OrderChat = require("./OrderChat");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -329,6 +330,12 @@ ModelHasRoles.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
 
 User.hasMany(ModelHasRoles, { foreignKey: "model_id", as: "modelHasRoles" });
 ModelHasRoles.belongsTo(User, { foreignKey: "model_id", as: "user" });
+
+Order.hasMany(OrderChat, { foreignKey: "order_id", as: "chats" });
+OrderChat.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+User.hasMany(OrderChat, { foreignKey: "user_id", as: "orderChats" });
+OrderChat.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
 module.exports = {
   ServiceCategory,
   Service,
@@ -372,5 +379,6 @@ module.exports = {
   StaffImage,
   StaffYoutubeVideo,
   Currency,
-  Role
+  Role,
+  OrderChat
 };
