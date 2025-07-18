@@ -10,6 +10,8 @@ const {
   StaffGeneralHoliday,
   Holiday,
   User,
+  ModelHasRoles,
+  Role,
 } = require("../models");
 const { Op } = require("sequelize");
 const moment = require("moment");
@@ -288,17 +290,60 @@ const getBookingSlots = async (req, res) => {
       const assignedStaff = await Staff.findAll({
         where: { user_id: slotStaffIds },
         attributes: ["id", "image", "sub_title", "phone", "status"],
-        include: [{ model: User, attributes: ["name"] }],
+        include: [
+          {
+            model: User,
+            attributes: ["name"],
+            include: [
+              {
+                model: ModelHasRoles,
+                as: "modelHasRoles",
+                where: { model_type: "App\\Models\\User" },
+                required: false,
+                include: [
+                  {
+                    model: Role,
+                    as: "role",
+                    where: { name: "Staff" },
+                    required: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       });
 
-      const staffList = assignedStaff.map((staff) => ({
-        id: staff.id,
-        name: staff.User ? staff.User.name : "",
-        image: `${urls.baseUrl}${urls.staffImages}${staff.image}`,
-        sub_title: staff.sub_title,
-        phone: staff.phone,
-        status: staff.status,
-      }));
+      let staffList = [];
+      try {
+        staffList = assignedStaff
+          .map((staff) => {
+            let isStaff = false;
+            if (
+              staff.User &&
+              staff.User.modelHasRoles &&
+              Array.isArray(staff.User.modelHasRoles) &&
+              staff.User.modelHasRoles.length > 0 &&
+              staff.User.modelHasRoles[0].role &&
+              staff.User.modelHasRoles[0].role.name === "Staff"
+            ) {
+              isStaff = true;
+            }
+            if (!isStaff) return null;
+            return {
+              id: staff.id,
+              name: staff.User?.name || "",
+              image: `${urls.baseUrl}${urls.staffImages}${staff.image}`,
+              sub_title: staff.sub_title,
+              phone: staff.phone,
+              status: staff.status,
+            };
+          })
+          .filter((staff) => staff !== null);
+      } catch (err) {
+        console.error("Error mapping staffList:", err);
+        staffList = [];
+      }
 
       slots.push({
         id: slot.id,

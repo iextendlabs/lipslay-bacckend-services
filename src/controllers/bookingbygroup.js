@@ -10,6 +10,8 @@ const {
   StaffGeneralHoliday,
   Holiday,
   User,
+  ModelHasRoles,
+  Role,
 } = require("../models");
 const { Op } = require("sequelize");
 const moment = require("moment");
@@ -52,14 +54,17 @@ async function getStaffMapForServices(services) {
       (category.Staffs || []).forEach((s) => staffSet.add(s.user_id));
 
       if (category.parent_id) {
-        const parentCategory = await ServiceCategory.findByPk(category.parent_id, {
-          include: [
-            {
-              model: Staff,
-              attributes: ["user_id"],
-            },
-          ],
-        });
+        const parentCategory = await ServiceCategory.findByPk(
+          category.parent_id,
+          {
+            include: [
+              {
+                model: Staff,
+                attributes: ["user_id"],
+              },
+            ],
+          }
+        );
         (parentCategory?.Staffs || []).forEach((s) => staffSet.add(s.user_id));
       }
     }
@@ -227,17 +232,60 @@ async function getSlotsForGroup({
     const assignedStaff = await Staff.findAll({
       where: { user_id: slotStaffIds },
       attributes: ["id", "image", "sub_title", "phone", "status"],
-      include: [{ model: User, attributes: ["name"] }],
+      include: [
+        {
+          model: User,
+          attributes: ["name"],
+          include: [
+            {
+              model: ModelHasRoles,
+              as: "modelHasRoles",
+              where: { model_type: "App\\Models\\User" },
+              required: false,
+              include: [
+                {
+                  model: Role,
+                  as: "role",
+                  where: { name: "Staff" },
+                  required: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
-    const staffList = assignedStaff.map((staff) => ({
-      id: staff.id,
-      name: staff.User?.name || "",
-      image: `${urls.baseUrl}${urls.staffImages}${staff.image}`,
-      sub_title: staff.sub_title,
-      phone: staff.phone,
-      status: staff.status,
-    }));
+    let staffList = [];
+    try {
+      staffList = assignedStaff
+        .map((staff) => {
+          let isStaff = false;
+          if (
+            staff.User &&
+            staff.User.modelHasRoles &&
+            Array.isArray(staff.User.modelHasRoles) &&
+            staff.User.modelHasRoles.length > 0 &&
+            staff.User.modelHasRoles[0].role &&
+            staff.User.modelHasRoles[0].role.name === "Staff"
+          ) {
+            isStaff = true;
+          }
+          if (!isStaff) return null;
+          return {
+            id: staff.id,
+            name: staff.User?.name || "",
+            image: `${urls.baseUrl}${urls.staffImages}${staff.image}`,
+            sub_title: staff.sub_title,
+            phone: staff.phone,
+            status: staff.status,
+          };
+        })
+        .filter((staff) => staff !== null);
+    } catch (err) {
+      console.error("Error mapping staffList:", err);
+      staffList = [];
+    }
 
     slots.push({
       id: slot.id,
@@ -253,27 +301,52 @@ async function getSlotsForGroup({
 
 const getBookingSlotsByGroup = async (req, res) => {
   try {
-    const { services, date, area, isAdmin = false, order_id = null, zone_id } = req.body;
+    const {
+      services,
+      date,
+      area,
+      isAdmin = false,
+      order_id = null,
+      zone_id,
+    } = req.body;
 
-    if (!services || !Array.isArray(services)) return res.status(400).json({ error: "Please provide services as an array." });
+    if (!services || !Array.isArray(services))
+      return res
+        .status(400)
+        .json({ error: "Please provide services as an array." });
     if (!date) return res.status(400).json({ error: "Please provide a date." });
-    if (!area) return res.status(400).json({ error: "Please provide an area." });
+    if (!area)
+      return res.status(400).json({ error: "Please provide an area." });
 
     const generalHoliday = await Holiday.findOne({ where: { date } });
-    if (generalHoliday) return res.status(400).json({ slots: [], message: "There is a holiday and no staff available." });
+    if (generalHoliday)
+      return res.status(400).json({
+        slots: [],
+        message: "There is a holiday and no staff available.",
+      });
 
     const staffZone = await StaffZone.findByPk(zone_id);
-    if (!staffZone) return res.status(400).json({ slots: [], message: "No staff zone found for the specified area." });
+    if (!staffZone)
+      return res.status(400).json({
+        slots: [],
+        message: "No staff zone found for the specified area.",
+      });
 
     const zoneStaffMembers = await staffZone.getStaffs();
     const zoneStaffIds = zoneStaffMembers.map((s) => s.user_id);
-    if (zoneStaffIds.length === 0) return res.status(400).json({ slots: [], message: "No staff available in the selected area." });
+    if (zoneStaffIds.length === 0)
+      return res.status(400).json({
+        slots: [],
+        message: "No staff available in the selected area.",
+      });
 
     const serviceToStaffMap = await getStaffMapForServices(services);
     const groups = groupServicesByStaffMap(serviceToStaffMap);
 
     const unavailableStaffIds = await getUnavailableStaffIds(date);
-    const shortHolidays = await ShortHoliday.findAll({ where: { date, status: "1" } });
+    const shortHolidays = await ShortHoliday.findAll({
+      where: { date, status: "1" },
+    });
 
     const currentDate = moment().format("YYYY-MM-DD");
     const currentTime = moment().format("HH:mm:ss");
@@ -298,7 +371,10 @@ const getBookingSlotsByGroup = async (req, res) => {
     }
 
     if (groupResults.length === 0) {
-      return res.status(400).json({ slots: [], message: "No available slots for the selected criteria." });
+      return res.status(400).json({
+        slots: [],
+        message: "No available slots for the selected criteria.",
+      });
     }
 
     res.json({ date, area, groups: groupResults });

@@ -110,8 +110,11 @@ const register = async (req, res) => {
     });
 
     // Assign role after user creation
+    // Get role_id for 'Customer' from Role table
+    const customerRole = await Role.findOne({ where: { name: 'Customer' } });
+    const roleId = customerRole ? customerRole.id : 3;
     await ModelHasRoles.create({
-      role_id: 3,
+      role_id: roleId,
       model_type: "App\\Models\\User",
       model_id: newUser.id,
     });
@@ -143,10 +146,20 @@ const getProfile = async function (req, res) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Get user role from ModelHasRoles and Role tables
+    let roleName = "Customer";
+    const userRole = await ModelHasRoles.findOne({
+      where: { model_id: user.id, model_type: "App\\Models\\User" },
+    });
+    if (userRole) {
+      const role = await Role.findByPk(userRole.role_id);
+      if (role && role.name) roleName = role.name;
+    }
+
     res.json({
       name: user.name || "",
       email: user.email || "",
-      role: user.role || "Customer",
+      role: roleName,
       phone: user.number || "",
       whatsapp: user.whatsapp || "",
       affiliate: user.affiliate || "",

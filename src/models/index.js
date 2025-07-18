@@ -43,6 +43,7 @@ const BidImage = require("./BidImage");
 const StaffImage = require("./StaffImage");
 const StaffYoutubeVideo = require("./StaffYoutubeVideo");
 const Currency = require("./Currency");
+const Role = require("./Role");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -323,6 +324,11 @@ StaffYoutubeVideo.belongsTo(Staff, { foreignKey: "staff_id", targetKey: "user_id
 StaffZone.belongsTo(Currency, { foreignKey: "currency_id", as: "currency" });
 Currency.hasMany(StaffZone, { foreignKey: "currency_id", as: "staffZones" });
 
+Role.hasMany(ModelHasRoles, { foreignKey: 'role_id', as: 'modelHasRoles' });
+ModelHasRoles.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
+
+User.hasMany(ModelHasRoles, { foreignKey: "model_id", as: "modelHasRoles" });
+ModelHasRoles.belongsTo(User, { foreignKey: "model_id", as: "user" });
 module.exports = {
   ServiceCategory,
   Service,
@@ -366,4 +372,5 @@ module.exports = {
   StaffImage,
   StaffYoutubeVideo,
   Currency,
+  Role
 };
