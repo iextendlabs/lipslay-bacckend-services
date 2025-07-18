@@ -4,6 +4,9 @@ const { OrderChat, User, ModelHasRoles, Role } = require('../models');
 const getOrderChats = async (req, res) => {
   try {
     const { order_id } = req.params;
+    if (!order_id) {
+      return res.status(400).json({ error: 'order_id is required.' });
+    }
     const chats = await OrderChat.findAll({
       where: { order_id },
       include: [
@@ -28,6 +31,9 @@ const getOrderChats = async (req, res) => {
       ],
       order: [['created_at', 'ASC']]
     });
+    if (!chats || chats.length === 0) {
+      return res.status(404).json({ error: 'No chats found for this order.' });
+    }
     // Map chats to required format
     const mappedChats = chats.map(chat => {
       let userType = 'User';
@@ -47,7 +53,7 @@ const getOrderChats = async (req, res) => {
     });
     res.json(mappedChats);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message || 'Internal server error.' });
   }
 };
 
@@ -56,18 +62,21 @@ const createOrderChat = async (req, res) => {
   try {
     const { order_id } = req.params;
     const { user_id, text, type } = req.body;
+    if (!order_id || !user_id || !text) {
+      return res.status(400).json({ error: 'order_id, user_id, and text are required.' });
+    }
     const chat = await OrderChat.create({
       order_id,
       user_id,
       text,
-      type,
-      created_at: new Date(),
-      updated_at: new Date()
+      type: typeof type !== 'undefined' ? type : null
     });
-
+    if (!chat) {
+      return res.status(500).json({ error: 'Failed to create chat.' });
+    }
     res.status(201).json({ success: true, message: 'Chat created successfully.' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message || 'Internal server error.' });
   }
 };
 
