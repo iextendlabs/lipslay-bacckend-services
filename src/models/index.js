@@ -256,8 +256,8 @@ Service.hasMany(Quote, { foreignKey: "service_id" });
 Quote.belongsTo(Bid, { foreignKey: 'bid_id' });
 Bid.hasMany(Quote, { foreignKey: 'bid_id' });
 
-Quote.belongsTo(Affiliate, { foreignKey: "affiliate_id" });
-Affiliate.hasMany(Quote, { foreignKey: "affiliate_id" });
+Quote.belongsTo(Affiliate, { foreignKey: "affiliate_id", targetKey: "user_id", as: "affiliate" });
+Affiliate.hasMany(Quote, { foreignKey: "affiliate_id", sourceKey: "user_id", as: "quotes" });
 
 Quote.belongsToMany(ServiceCategory, {
   through: "quote_category",

@@ -6,7 +6,8 @@ const {
   QuoteStaff,
   Transaction,
   User,
-  BidImage, // Add BidImage model
+  BidImage,
+  Affiliate, // Add BidImage model
 } = require("../models");
 const urls = require("../config/urls");
 
@@ -74,6 +75,7 @@ const confirmBid = async (req, res) => {
   try {
     const quote = await Quote.findOne({
       where: { id: quoteId, user_id: userId },
+      include: [{ model: Affiliate, as: "affiliate" }],
     });
     if (!quote) {
       return res
@@ -90,7 +92,6 @@ const confirmBid = async (req, res) => {
     quote.status = "Complete";
     await quote.save();
 
-    // Send notification to staff user whose bid was accepted
     const staffUser = await User.findByPk(bid.staff_id);
     if (staffUser) {
       await staffUser.notifyOnMobile(
@@ -101,7 +102,6 @@ const confirmBid = async (req, res) => {
       );
     }
 
-    // Find the QuoteStaff record for this quote and staff
     const staffQuote = await QuoteStaff.findOne({
       where: { quote_id: quoteId, staff_id: bid.staff_id },
     });
@@ -110,7 +110,6 @@ const confirmBid = async (req, res) => {
       commission =
         (Number(bid.bid_amount) * Number(staffQuote.quote_commission)) / 100;
       if (commission) {
-        // TODO - Handle affiliate commission
         await Transaction.create({
           user_id: bid.staff_id,
           amount: -commission,
@@ -120,6 +119,24 @@ const confirmBid = async (req, res) => {
           created_at: new Date(),
           updated_at: new Date(),
         });
+
+        if (quote.affiliate_id) {
+          const affiliate = quote.affiliate;
+          if (affiliate && affiliate.commission && affiliate.commission > 0) {
+            const affiliateCommission = commission * affiliate.commission / 100;
+            if (affiliateCommission) {
+              await Transaction.create({
+                user_id: affiliate.user_id,
+                amount: affiliateCommission,
+                type: "Quote",
+                status: "Approved",
+                description: `Affiliate commission for quote ID: ${quote.id}`,
+                created_at: new Date(),
+                updated_at: new Date(),
+              });
+            }
+          }
+        }
       }
     }
 
