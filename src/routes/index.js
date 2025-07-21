@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middleware/authMiddleware");
+const cacheHeader = require("../middleware/cacheHeader");
 const createUpload = require("../utils/upload");
 const { getHomeData } = require("../controllers/home.controller");
 const { searchServices } = require("../controllers/search.controller");
@@ -69,7 +70,7 @@ router.get("/home", getHomeData);
 router.get("/search", searchServices);
 router.get("/service", getServiceBySlug);
 router.get("/category", getCategoryBySlug);
-router.get("/categories", listMainCategories);
+router.get("/categories",cacheHeader, listMainCategories);
 router.post("/booking/slots", getBookingSlots);
 router.get("/info", getInfo);
 router.get("/faqs", listFaqs);

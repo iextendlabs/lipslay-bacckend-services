@@ -7,7 +7,6 @@ const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require('../utils/currency');
 const { formatCategory } = require('../formatters/responseFormatter');
 
-
 const getCategoryBySlug = async (slug, zone_id) => {
   const cacheKey = `category_${slug}_${zone_id}`;
   const cached = cache.get(cacheKey);
@@ -39,29 +38,21 @@ const getCategoryBySlug = async (slug, zone_id) => {
   }
 
   // For each service, calculate average rating and format response
-  const formattedServices = await Promise.all((category.services || []).map(async (service) => {
-    const reviews = await Review.findAll({
-      where: { service_id: service.id },
-      attributes: ['rating']
-    });
-    const avgRating = reviews.length
-      ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
-      : null;
+  const formattedServices = (category.services || []).map(service => {
     return {
       id: service.id,
       name: service.name,
-      price: await formatCurrency(service.price ?? 0, zone_id, true),
-      discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
+      price: formatCurrency(service.price ?? 0, zone_id, true),
+      discount: service.discount != null && service.discount > 0 ? formatCurrency(service.discount, zone_id, true) : null,
       duration: service.duration,
-      rating: avgRating ? Number(avgRating) : null,
+      rating: service?.rating || null,
       description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
       image: service.image,
       slug: category.slug + '/' + service.slug
     };
-  }));
+  });
 
   // Format subcategories
-  const subcategories = (category.childCategories || []).map(sub => (formatCategory(sub, urls)));
 
   const result = {
     title: category.title,
@@ -69,7 +60,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
     image: category.image,
     services: formattedServices,
     slug: category.slug,
-    subcategories
+    subcategories: category.childCategories 
   };
   cache.set(cacheKey, result);
   return result;

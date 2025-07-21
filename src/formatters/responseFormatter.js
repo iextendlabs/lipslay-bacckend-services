@@ -40,6 +40,7 @@ const formatCategory = (category) => {
       slug: service.slug,
     })),
     slug: category.slug,
+    href: category.slug,
     subcategories:  category?.subcategories && category.subcategories.map((sub) => ({
       id: sub.id,
       title: sub.title,
