@@ -258,7 +258,7 @@ const list = async (req, res) => {
       service_image:
         q.Service && q.Service.image
           ? `${urls.baseUrl}${urls.serviceImages}${q.Service.image}`
-          : `${urls.baseUrl}default.png`,
+          : `${urls.baseUrl}/default.png`,
     }));
 
     return res.json({ success: true, data });
@@ -324,7 +324,7 @@ const view = async (req, res) => {
         service_image:
           quote.Service && quote.Service.image
             ? `${urls.baseUrl}${urls.serviceImages}${quote.Service.image}`
-            : `${urls.baseUrl}default.png`,
+            : `${urls.baseUrl}/default.png`,
         quote_images: images,
         quote_options,
       },

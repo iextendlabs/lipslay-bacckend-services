@@ -84,6 +84,7 @@ const formatService = (service) => {
       duration: addon.duration,
       image: buildUrl(urls.serviceImages, addon.image),
       slug: addon.slug,
+      hasOptionsOrQuote: addon.hasOptionsOrQuote,
     })),
     packages: service.packages.map((pkg) => ({
       id: pkg.id,

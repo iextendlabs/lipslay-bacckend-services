@@ -110,7 +110,7 @@ const getStaffDetail = async (req, res) => {
           rating: avgRating ? Number(avgRating) : null,
           image: s.image
             ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-            : `${urls.baseUrl}default.png`,
+            : `${urls.baseUrl}/default.png`,
           description: trimWords(
             stripHtmlTags(s.description),
             textLimits.serviceDescriptionWords
@@ -127,12 +127,12 @@ const getStaffDetail = async (req, res) => {
       description: cat.description || "",
       image: cat.image
         ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
-        : `${urls.baseUrl}default.png`,
+        : `${urls.baseUrl}/default.png`,
       href: cat.slug,
     }));
 
     const images = (staffObj.images || [])
-      .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : `${urls.baseUrl}default.png`))
+      .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : `${urls.baseUrl}/default.png`))
       .filter(Boolean);
     const youtubeVideos = (staffObj.youtubeVideos || [])
       .map((v) => v.youtube_video)
@@ -145,7 +145,7 @@ const getStaffDetail = async (req, res) => {
       location: staffObj.location,
       image: staffObj.image
         ? `${urls.baseUrl}${urls.staffImages}${staffObj.image}`
-        : `${urls.baseUrl}default.png`,
+        : `${urls.baseUrl}/default.png`,
       charges: staffObj.charges,
       status: staffObj.status,
       instagram: showSocialLinks ? staffObj.instagram : null,
@@ -231,7 +231,7 @@ const getAllStaff = async (req, res) => {
         charges: staff.charges,
         image: staff.image
           ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : `${urls.baseUrl}default.png`,
+          : `${urls.baseUrl}/default.png`,
       };
     });
 

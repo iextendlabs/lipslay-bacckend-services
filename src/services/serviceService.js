@@ -1,4 +1,5 @@
 
+
 const {
   Service,
   ServiceCategory,
@@ -10,6 +11,7 @@ const {
   ServiceOption,
   SubTitle,
 } = require("../models");
+const cache = require("../utils/cache");
 
 const { Op } = require("sequelize");
 const striptags = require("striptags");
@@ -25,6 +27,11 @@ const trimWords = (text, maxWords = 100) => {
 };
 
 const getServiceBySlug = async (slug, zone_id) => {
+  // --- Caching ---
+  const cacheKey = `service_${slug}_${zone_id}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
   // --- Fetch Main Service ---
   const service = await Service.findOne({
     where: { slug, status: 1 },
@@ -69,6 +76,7 @@ const getServiceBySlug = async (slug, zone_id) => {
           "duration",
           "image",
           "slug",
+          "quote"
         ],
       },
       {
@@ -122,15 +130,28 @@ const getServiceBySlug = async (slug, zone_id) => {
 
   const gallery = images.map((img) => img.image);
 
-  const addOns = await Promise.all((service.AddOns || []).map(async (addon) => ({
-    id: addon.id,
-    name: addon.name,
-    price: await formatCurrency(addon.price ?? 0, zone_id, true),
-    discount: addon.discount != null && addon.discount > 0 ? await formatCurrency(addon.discount, zone_id, true) : null,
-    duration: addon.duration,
-    image: addon.image,
-    slug: addon.slug,
-  })));
+   const addOns = await Promise.all((service.AddOns || []).map(async (addon) => {
+    const addonOptions = await ServiceOption.findAll({
+      where: { service_id: addon.id },
+      attributes: [
+        "id",
+        "option_name",
+        "option_price",
+        "option_duration",
+        "image",
+      ],
+    });
+    return {
+      id: addon.id,
+      name: addon.name,
+      price: await formatCurrency(addon.price ?? 0, zone_id, true),
+      discount: addon.discount != null && addon.discount > 0 ? await formatCurrency(addon.discount, zone_id, true) : null,
+      duration: addon.duration,
+      image: addon.image,
+      slug: addon.slug,
+      hasOptionsOrQuote: (Array.isArray(addonOptions) && addonOptions.length > 0) || addon.quote === 1 ? true : false
+    };
+  }));
 
   const packages = await Promise.all((service.Packages || []).map(async (pkg) => ({
     id: pkg.id,
@@ -237,7 +258,7 @@ const getServiceBySlug = async (slug, zone_id) => {
     image: opt.image,
   })));
 
-  return {
+  const result = {
     id: service.id,
     name: service.name,
     quote: service.quote ? true : false,
@@ -265,6 +286,8 @@ const getServiceBySlug = async (slug, zone_id) => {
     addOns,
     packages,
   };
+  cache.set(cacheKey, result);
+  return result;
 };
 
 module.exports = { getServiceBySlug };

@@ -290,7 +290,7 @@ const getOrdersByIds = async (req, res) => {
               duration: os.duration,
               image: os.service?.image
                 ? `${urls.baseUrl}${urls.serviceImages}${os.service.image}`
-                : `${urls.baseUrl}default.png`,
+                : `${urls.baseUrl}/default.png`,
             }))
           ),
           staff_name: order.staff_name ?? null,

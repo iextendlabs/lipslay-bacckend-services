@@ -54,7 +54,7 @@ const getHomeData = async (req, res) => {
       description: cat.description || "",
       image: cat.image
         ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
-        : `${urls.baseUrl}default.png`,
+        : `${urls.baseUrl}/default.png`,
       popular: !!cat.popular,
       href: cat.slug,
     }));
@@ -80,7 +80,7 @@ const getHomeData = async (req, res) => {
             rating: avgRating ? Number(avgRating) : null,
             image: s.image
               ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-              : `${urls.baseUrl}default.png`,
+              : `${urls.baseUrl}/default.png`,
             description: trimWords(
               stripHtmlTags(s.description),
               textLimits.serviceDescriptionWords
@@ -133,7 +133,7 @@ const getHomeData = async (req, res) => {
         charges: staff.charges,
         image: staff.image
           ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : `${urls.baseUrl}default.png`,
+          : `${urls.baseUrl}/default.png`,
       };
     });
 
