@@ -15,8 +15,8 @@ const listFaqs = async (req, res) => {
     const plainFaqs = faqs.map(f => f.dataValues ? f.dataValues : f);
     cache.set(cacheKey, plainFaqs);
     res.json(plainFaqs);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch FAQs' });
+  } catch {
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 

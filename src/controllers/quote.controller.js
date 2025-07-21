@@ -8,13 +8,8 @@ const {
   ServiceCategory,
   QuoteStaff,
   StaffZone,
-  Bid,
-  BidChat,
-  Transaction,
 } = require("../models");
 const bcrypt = require("bcrypt");
-const fs = require("fs");
-const path = require("path");
 const urls = require("../config/urls");
 
 // Helper to create guest user
@@ -34,7 +29,7 @@ async function findOrCreateUser(input) {
 
 // Main store function
 const store = async (req, res) => {
-  let input = { ...req.body };
+  const input = { ...req.body };
   if (
     !input.service_id ||
     !input.service_name ||

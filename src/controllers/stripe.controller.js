@@ -1,5 +1,5 @@
 const Stripe = require("stripe");
-const { User, Order, Setting, StaffZone } = require("../models");
+const { User, Order } = require("../models");
 const stripe = Stripe(process.env.STRIPE_SECRET);
 
 // POST /stripe/payment-intent

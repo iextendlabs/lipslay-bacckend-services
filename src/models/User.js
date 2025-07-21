@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../utils/db');
 const { sendPushNotification } = require('../utils/pushNotification');
-const Notification = require('./Notification');
 
 const User = sequelize.define('User', {
   id: { type: DataTypes.BIGINT.UNSIGNED, primaryKey: true, autoIncrement: true },
@@ -28,20 +27,6 @@ const User = sequelize.define('User', {
 
 User.prototype.notifyOnMobile = async function(title, body, orderId = null, type = null) {
     if (!this.device_token) return 'No device token provided.';
-    // Save notification to DB
-    let notification;
-    try {
-        notification = await Notification.create({
-            order_id: orderId,
-            user_id: this.id,
-            title,
-            body,
-            type
-        });
-    } catch (err) {
-        // Optionally log error
-        return `Error saving notification: ${err.message}`;
-    }
     // Device type check (if needed)
     if (!this.device_type || this.device_type === type) {
         return await sendPushNotification({

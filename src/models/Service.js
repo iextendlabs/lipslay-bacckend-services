@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../utils/db");
-const Coupon = require("./Coupon");
 
 const Service = sequelize.define(
   "Service",

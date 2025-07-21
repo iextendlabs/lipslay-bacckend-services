@@ -197,7 +197,7 @@ const getBidWithChats = async (req, res) => {
     };
     const chatData = (bid.chats || []).map((chat) => {
       let type = "text";
-      let value = chat.message;
+      const value = chat.message;
       let link = null;
       if (chat.location == 1) {
         type = "location";

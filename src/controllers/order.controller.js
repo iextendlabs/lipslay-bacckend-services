@@ -10,7 +10,6 @@ const {
   Complaint,
   OrderService,
   Service,
-  TimeSlot,
   User,
   Coupon,
   ServiceCategory,
@@ -86,8 +85,9 @@ const orderTotal = async (req, res) => {
     const staffZone = await StaffZone.findByPk(input.zone_id);
     const currentDate = new Date();
 
-    const [formattedBookings, groupedBookingOption, groupedBooking] =
-      await formattingBookingData(bookingData);
+    const [groupedBookingOption, groupedBooking] = await formattingBookingData(
+      bookingData
+    );
 
     let allServiceIds = [];
     for (const key in groupedBooking) {
@@ -129,11 +129,11 @@ const orderTotal = async (req, res) => {
 
     for (const key in groupedBooking) {
       const singleBookingService = groupedBooking[key];
-      const [date, service_staff_id, time_slot_id] = key.split("_");
 
       // Fetch staff by Staff model and include User
+      const staffId = Array.isArray(singleBookingService) ? singleBookingService[0] : singleBookingService;
       const staff = await Staff.findOne({
-        where: { id: service_staff_id },
+        where: { id: staffId },
         include: [{ model: User }],
       });
       const selected_services = await Service.findAll({

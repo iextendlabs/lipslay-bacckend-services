@@ -47,7 +47,7 @@ async function getStaffMapForServices(services) {
       continue;
     }
 
-    let staffSet = new Set();
+    const staffSet = new Set();
     (service.Staffs || []).forEach((s) => staffSet.add(s.user_id));
 
     for (const category of service.ServiceCategories || []) {

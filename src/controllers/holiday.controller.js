@@ -13,8 +13,8 @@ const listHolidayDates = async (req, res) => {
     });
     const dates = holidays.map(h => h.date);
     res.json({ dates });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch holiday dates' });
+  } catch {
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 

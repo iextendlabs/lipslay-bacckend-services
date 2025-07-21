@@ -1,5 +1,4 @@
 const Information = require('../models/Information');
-const { Op } = require('sequelize');
 
 const getInfo = async (req, res) => {
   const { slug } = req.query;

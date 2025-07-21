@@ -165,7 +165,7 @@ const getProfile = async function (req, res) {
       affiliate: user.affiliate || "",
       gender: user.gender || "Male",
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -190,7 +190,7 @@ const setProfile = async function (req, res) {
     await user.save();
 
     res.json({ message: "Profile updated successfully." });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -205,7 +205,7 @@ const getAddresses = async function (req, res) {
       where: { user_id: userId },
     });
     res.json(addresses);
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -255,7 +255,7 @@ const saveAddress = async function (req, res) {
       });
     }
     res.json({ message: "Address saved successfully", address });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -278,7 +278,7 @@ const deleteAddress = async function (req, res) {
     }
     await address.destroy();
     res.json({ message: "Address deleted successfully" });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Internal server error" });
   }
 };

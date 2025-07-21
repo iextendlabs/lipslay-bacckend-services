@@ -2,37 +2,36 @@ const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middleware/authMiddleware");
 const createUpload = require("../utils/upload");
-const { getHomeData } = require("../controllers/home");
-const { searchServices } = require("../controllers/search");
-const { getServiceBySlug } = require("../controllers/service");
-const { createOrder } = require("../controllers/checkout");
+const { getHomeData } = require("../controllers/home.controller");
+const { searchServices } = require("../controllers/search.controller");
+const { getServiceBySlug } = require("../controllers/service.controller");
+const { createOrder } = require("../controllers/checkout.controller");
 const {
   getCategoryBySlug,
   listMainCategories,
-} = require("../controllers/category");
-const { getBookingSlots } = require("../controllers/booking");
-const { getInfo } = require("../controllers/info");
-const { listFaqs } = require("../controllers/faq");
-const { getStaffDetail, getAllStaff } = require("../controllers/staff");
-const userController = require("../controllers/user");
+} = require("../controllers/category.controller");
+const { getBookingSlots } = require("../controllers/booking.controller");
+const { getInfo } = require("../controllers/info.controller");
+const { listFaqs } = require("../controllers/faq.controller");
+const { getStaffDetail, getAllStaff } = require("../controllers/staff.controller");
+const userController = require("../controllers/user.controller");
 const {
   listOrders,
   cancelOrder,
   orderTotal,
   getOrdersByIds,
   updateOrdersToPendingCOD,
-} = require("../controllers/order");
+} = require("../controllers/order.controller");
 const stripeRoutes = require("./stripe");
-const reviewController = require("../controllers/review");
-const complaintController = require("../controllers/complaint");
-const holidayController = require("../controllers/holiday");
-const quoteController = require("../controllers/quoteController");
-const couponController = require("../controllers/coupon");
-const zoneController = require("../controllers/zone");
-const bidController = require("../controllers/bidController");
-const bookingByGroupController = require("../controllers/bookingbygroup");
-const { formatCurrency } = require("../utils/currency");
-const { getLayoutData } = require("../controllers/layoutData");
+const reviewController = require("../controllers/review.controller");
+const complaintController = require("../controllers/complaint.controller");
+const holidayController = require("../controllers/holiday.controller");
+const quoteController = require("../controllers/quote.controller");
+const couponController = require("../controllers/coupon.controller");
+const zoneController = require("../controllers/zone.controller");
+const bidController = require("../controllers/bid.controller");
+const bookingByGroupController = require("../controllers/bookingbygroup.controller");
+const { getLayoutData } = require("../controllers/layoutData.controller");
 // TODO forget password endpoint
 const reviewUpload = createUpload({
   getPath: (file) => {

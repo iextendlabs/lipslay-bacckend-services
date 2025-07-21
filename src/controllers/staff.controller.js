@@ -20,7 +20,7 @@ const cache = require("../utils/cache");
  * GET /staff?staff=slug_or_id
  * Returns staff details, related services, categories, description, reviews, etc.
  */
-const getStaffDetail = async (req, res, next) => {
+const getStaffDetail = async (req, res) => {
   try {
     const zone_id = req.query.zoneId ?? null;
     const { staff } = req.query;
@@ -40,8 +40,7 @@ const getStaffDetail = async (req, res, next) => {
       showSocialLinks = false;
     }
 
-    let staffObj;
-    staffObj = await Staff.findOne({
+    const staffObj = await Staff.findOne({
       where: isNaN(staff) ? { slug: staff } : { id: staff },
       include: [
         {
