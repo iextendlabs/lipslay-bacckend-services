@@ -40,41 +40,32 @@ const getStaffDetail = async (req, res) => {
       showSocialLinks = false;
     }
 
+    // Fetch staff basic info
     const staffObj = await Staff.findOne({
-      where: isNaN(staff) ? { slug: staff } : { id: staff },
-      include: [
-        {
-          model: Service,
-          through: { attributes: [] },
-        },
-        {
-          model: ServiceCategory,
-          through: { attributes: [] },
-        },
-        {
-          model: Review,
-          as: "reviews",
-        },
-        {
-          model: SubTitle,
-          as: "subTitles",
-          attributes: ["name"],
-          through: { attributes: [] },
-        },
-        {
-          model: require("../models").User,
-          attributes: ["name"],
-        },
-        {
-          model: StaffImage,
-          as: "images",
-        },
-        {
-          model: StaffYoutubeVideo,
-          as: "youtubeVideos",
-        },
-      ],
+      where: isNaN(staff) ? { slug: staff } : { id: staff }
     });
+    if (!staffObj) {
+      return res.status(404).json({ error: "Staff not found" });
+    }
+
+    // Fetch related models separately
+    const [
+      services,
+      categories,
+      reviews,
+      subTitles,
+      user,
+      images,
+      youtubeVideos
+    ] = await Promise.all([
+      staffObj.getServices(),
+      staffObj.getServiceCategories(),
+      staffObj.getReviews(),
+      staffObj.getSubTitles({ attributes: ["name"] }),
+      require("../models").User.findOne({ where: { id: staffObj.user_id }, attributes: ["name"] }),
+      staffObj.getImages(),
+      staffObj.getYoutubeVideos()
+    ]);
 
     if (!staffObj) {
       return res.status(404).json({ error: "Staff not found" });
@@ -85,22 +76,19 @@ const getStaffDetail = async (req, res) => {
     });
 
     let subTitleStr = null;
-    if (Array.isArray(staffObj.subTitles) && staffObj.subTitles.length > 0) {
-      subTitleStr = staffObj.subTitles.map((st) => st.name).join(" / ");
+    if (Array.isArray(subTitles) && subTitles.length > 0) {
+      subTitleStr = subTitles.map((st) => st.name).join(" / ");
     }
 
-    const services = await Promise.all(
-      staffObj.Services.map(async (s) => {
+    const formattedServices = await Promise.all(
+      services.map(async (s) => {
         const serviceCategories = await s.getServiceCategories();
-        const cat =
-          serviceCategories && serviceCategories.length > 0
-            ? serviceCategories[0]
-            : null;
-        const reviews = await Review.findAll({ where: { service_id: s.id } });
-        const avgRating = reviews.length
+        const cat = serviceCategories && serviceCategories.length > 0 ? serviceCategories[0] : null;
+        const serviceReviews = await Review.findAll({ where: { service_id: s.id } });
+        const avgRating = serviceReviews.length
           ? (
-              reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-              reviews.length
+              serviceReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+              serviceReviews.length
             ).toFixed(1)
           : null;
         return {
@@ -108,33 +96,26 @@ const getStaffDetail = async (req, res) => {
           price: await formatCurrency(s.price ?? 0, zone_id, true),
           discount: s.discount != null && s.discount > 0 ? await formatCurrency(s.discount, zone_id, true) : null,
           rating: avgRating ? Number(avgRating) : null,
-          image: s.image
-            ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-            : `${urls.baseUrl}/default.png`,
-          description: trimWords(
-            stripHtmlTags(s.description),
-            textLimits.serviceDescriptionWords
-          ),
+          image: s.image ? `${urls.baseUrl}${urls.serviceImages}${s.image}` : `${urls.baseUrl}/default.png`,
+          description: trimWords(stripHtmlTags(s.description), textLimits.serviceDescriptionWords),
           duration: s.duration,
           slug: cat ? cat.slug + "/" + s.slug : s.slug,
         };
       })
     );
 
-    const categories = staffObj.ServiceCategories.map((cat) => ({
+    const formattedCategories = categories.map((cat) => ({
       id: cat.id,
       title: cat.title,
       description: cat.description || "",
-      image: cat.image
-        ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
-        : `${urls.baseUrl}/default.png`,
+      image: cat.image ? `${urls.baseUrl}${urls.categoryImages}${cat.image}` : `${urls.baseUrl}/default.png`,
       href: cat.slug,
     }));
 
-    const images = (staffObj.images || [])
+    const formattedImages = (images || [])
       .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : `${urls.baseUrl}/default.png`))
       .filter(Boolean);
-    const youtubeVideos = (staffObj.youtubeVideos || [])
+    const formattedYoutubeVideos = (youtubeVideos || [])
       .map((v) => v.youtube_video)
       .filter(Boolean);
 
@@ -143,9 +124,7 @@ const getStaffDetail = async (req, res) => {
       staff_id: staffObj.id,
       user_id: staffObj.user_id,
       location: staffObj.location,
-      image: staffObj.image
-        ? `${urls.baseUrl}${urls.staffImages}${staffObj.image}`
-        : `${urls.baseUrl}/default.png`,
+      image: staffObj.image ? `${urls.baseUrl}${urls.staffImages}${staffObj.image}` : `${urls.baseUrl}/default.png`,
       charges: staffObj.charges,
       status: staffObj.status,
       instagram: showSocialLinks ? staffObj.instagram : null,
@@ -158,15 +137,15 @@ const getStaffDetail = async (req, res) => {
       min_order_value: staffObj.min_order_value,
       online: staffObj.online,
       get_quote: staffObj.get_quote,
-      name: staffObj.User ? staffObj.User.name : null,
+      name: user ? user.name : null,
       slug: staffObj.slug,
       description: staffObj.description,
       order_count: orderCount,
-      services,
-      categories,
-      reviews: staffObj.reviews || [],
-      images, // Added
-      youtube_videos: youtubeVideos, // Added
+      services: formattedServices,
+      categories: formattedCategories,
+      reviews: reviews || [],
+      images: formattedImages,
+      youtube_videos: formattedYoutubeVideos,
     };
     cache.set(cacheKey, output);
 
