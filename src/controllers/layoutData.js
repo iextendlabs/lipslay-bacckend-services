@@ -19,7 +19,7 @@ const getLayoutData = async (req, res) => {
     });
 
     const bottomCategories = await ServiceCategory.findAll({
-      where: { feature: 1, status: 1 },
+      where: { feature_on_bottom: 1, status: 1 },
       attributes: ['title', 'slug']
     });
 
