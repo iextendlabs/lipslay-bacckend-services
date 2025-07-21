@@ -38,7 +38,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
   }
 
   // For each service, calculate average rating and format response
-  const formattedServices = (category.services || []).map(async service => {
+  const formattedServices = await Promise.all((category.services || []).map(async service => {
     return {
       id: service.id,
       name: service.name,
@@ -50,7 +50,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
       image: service.image,
       slug: category.slug + '/' + service.slug
     };
-  });
+  }));
 
   // Format subcategories
 

@@ -1,4 +1,19 @@
+
 const { StaffZone, Currency } = require("../models");
+const cache = require("./cache");
+
+async function getZoneData(zoneId) {
+    const cacheKey = `staffZone:${zoneId}`;
+    let staffZone = await cache.get(cacheKey);
+    if (staffZone) return staffZone;
+    console.log(`Fetching zone data for zoneId: ${zoneId}`);
+    staffZone = await StaffZone.findOne({
+        where: { id: zoneId },
+        include: [{ model: Currency, as: 'currency' }]
+    });
+    if (staffZone) await cache.set(cacheKey, staffZone);
+    return staffZone;
+}
 
 // helpers/currency.js
 async function formatCurrency(amount, zoneId = null, extraCharges = false) {
@@ -7,11 +22,7 @@ async function formatCurrency(amount, zoneId = null, extraCharges = false) {
         let modifiedAmount = Number(amount);
 
         if (zoneId) {
-            const staffZone = await StaffZone.findOne({
-                where: { id: zoneId },
-                include: [{ model: Currency, as: 'currency' }]
-            });
-
+            const staffZone = await getZoneData(zoneId);
             if (staffZone) {
                 const charges = extraCharges && staffZone.extra_charges ? parseFloat(staffZone.extra_charges) : 0;
                 if (staffZone.currency) {
