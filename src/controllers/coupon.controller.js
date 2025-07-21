@@ -1,4 +1,4 @@
-const { Order, CouponHistory } = require("../models");
+const { CouponHistory } = require("../models");
 const { formattingBookingData } = require("../helpers/checkoutHelpers");
 const { Coupon, Service, StaffZone, User } = require("../models");
 const { formatCurrency } = require("../utils/currency");

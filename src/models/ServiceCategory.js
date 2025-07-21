@@ -2,7 +2,6 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../utils/db");
 const Staff = require("./Staff");
 const User = require("./User");
-const Coupon = require("./Coupon");
 
 const ServiceCategory = sequelize.define(
   "ServiceCategory",

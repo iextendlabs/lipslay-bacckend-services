@@ -1,4 +1,4 @@
-const { Complaint, ComplaintChat, User } = require("../models");
+const { Complaint, ComplaintChat } = require("../models");
 
 // Create complaint
 const create = async (req, res) => {

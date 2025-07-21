@@ -18,7 +18,6 @@ const {
   getAffiliateId,
   getDriverForTimeSlot,
 } = require("../helpers/checkoutHelpers");
-const urls = require("../config/urls");
 const { formatCurrency } = require("../utils/currency");
 
 // POST /order - Create a new order
@@ -31,24 +30,15 @@ const createOrder = async (req, res) => {
       include: [{ model: Currency, as: 'currency' }]
     })) || {};
 
-    let password = ""; // Placeholder for compatibility
     const [customerType, customer_id] = await findOrCreateUser(input);
     input.customer_id = customer_id;
     input.customer_name = input.name;
     input.customer_email = input.email;
     input.driver_status = "Pending";
-    input.number = input.number;
-    input.whatsapp = input.whatsapp;
 
-    const [formattedBookings, groupedBookingOption, groupedBooking] =
+    const [groupedBookingOption, groupedBooking] =
       await formattingBookingData(bookingData);
 
-    let i = 0;
-    let all_sub_total = 0,
-      all_discount = 0,
-      all_staff_charges = 0,
-      all_transport_charges = 0,
-      all_total_amount = 0;
     const order_ids = [];
 
     for (const key in groupedBooking) {
@@ -117,12 +107,6 @@ const createOrder = async (req, res) => {
         transport_charges,
         total_amount,
       });
-
-      all_sub_total += sub_total;
-      all_discount += discount;
-      all_staff_charges += staff_charges;
-      all_transport_charges += transport_charges;
-      all_total_amount += total_amount;
 
       if (input.affiliate_code) {
         input.affiliate_id = await getAffiliateId(input.affiliate_code);
@@ -264,7 +248,7 @@ const createOrder = async (req, res) => {
     res.json({
       customer_type: customerType,
       order_ids,
-      Total: await formatCurrency(all_total_amount, input.zone_id),
+      Total: await formatCurrency(input.total_amount, input.zone_id),
     });
   } catch (error) {
     console.error(error);

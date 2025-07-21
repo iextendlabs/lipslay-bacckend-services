@@ -2,7 +2,7 @@ const { google } = require('googleapis');
 const axios = require('axios');
 const path = require('path');
 
-async function sendPushNotification({ deviceToken, title, body, orderId = null, type = null, deviceType = null }) {
+async function sendPushNotification({ deviceToken, title, body }) {
     if (!deviceToken) return 'No device token provided.';
     try {
         const serviceAccountFile = path.join(__dirname, '../../config/firebase-service-account.json');

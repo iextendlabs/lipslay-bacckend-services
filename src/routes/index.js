@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../middleware/authMiddleware");
@@ -32,7 +31,6 @@ const couponController = require("../controllers/coupon.controller");
 const zoneController = require("../controllers/zone.controller");
 const bidController = require("../controllers/bid.controller");
 const bookingByGroupController = require("../controllers/bookingbygroup.controller");
-const { formatCurrency } = require("../utils/currency");
 const { getLayoutData } = require("../controllers/layoutData.controller");
 // TODO forget password endpoint
 const reviewUpload = createUpload({

@@ -83,7 +83,7 @@ const getBookingSlots = async (bookingData) => {
     ],
   });
 
-  let staffIdsFromCategories = [];
+  const staffIdsFromCategories = [];
   const processedCategoryIds = new Set();
 
   for (const service of serviceWithCategories) {
@@ -100,7 +100,7 @@ const getBookingSlots = async (bookingData) => {
         category.parent_id &&
         !processedCategoryIds.has(category.parent_id)
       ) {
-        let parentCategory = await ServiceCategory.findByPk(
+        const parentCategory = await ServiceCategory.findByPk(
           category.parent_id,
           {
             include: [
@@ -128,7 +128,7 @@ const getBookingSlots = async (bookingData) => {
   ];
 
   // 5. Filter staff based on area
-  let eligibleZoneStaffIds = eligibleStaffIdsFromServices.filter((id) =>
+  const eligibleZoneStaffIds = eligibleStaffIdsFromServices.filter((id) =>
     zoneStaffIds.includes(id)
   );
 

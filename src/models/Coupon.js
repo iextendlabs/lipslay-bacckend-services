@@ -78,7 +78,7 @@ Coupon.getDiscountForProducts = async function (
       for (const service of services) {
         if (applicable_services.includes(service.id)) {
           const options = bookingOption[service.id] || {};
-          let servicePrice =
+          const servicePrice =
             options.total_price ??
             service.serviceOption?.find((opt) => opt.id === options.id)
               ?.option_price ??
@@ -209,7 +209,7 @@ Coupon.isValidCoupon = async function (
   let services_total = 0;
   for (const service of services) {
     const options = bookingOption[service.id] || {};
-    let servicePrice =
+    const servicePrice =
       options.total_price ??
       service.serviceOption?.find((opt) => opt.id === options.id)
         ?.option_price ??
