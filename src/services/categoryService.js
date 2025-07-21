@@ -38,12 +38,12 @@ const getCategoryBySlug = async (slug, zone_id) => {
   }
 
   // For each service, calculate average rating and format response
-  const formattedServices = (category.services || []).map(service => {
+  const formattedServices = (category.services || []).map(async service => {
     return {
       id: service.id,
       name: service.name,
-      price: formatCurrency(service.price ?? 0, zone_id, true),
-      discount: service.discount != null && service.discount > 0 ? formatCurrency(service.discount, zone_id, true) : null,
+      price: await formatCurrency(service.price ?? 0, zone_id, true),
+      discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
       duration: service.duration,
       rating: service?.rating || null,
       description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
