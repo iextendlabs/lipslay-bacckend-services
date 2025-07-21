@@ -26,7 +26,7 @@ const getCategoryBySlug = async (req, res) => {
 const listMainCategories = async (req, res) => {
   try {
     const categories = await categoryService.listMainCategories();
-    res.json(responseFormatter.formatCategories(categories));
+    res.json(categories);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });

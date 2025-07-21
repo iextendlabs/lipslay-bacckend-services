@@ -11,18 +11,14 @@ function formatCategory(cat, urls) {
     id: cat.id,
     title: cat.title,
     description: cat.description || "",
-    image: cat.image
-      ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
-      : `${urls.baseUrl}default.png`,
+    image: cat.image,
     popular: !!cat.popular,
     href: `${cat.slug}`,
     subcategories: (cat.childCategories || []).map(sub => ({
       id: sub.id,
       title: sub.title,
       description: sub.description || "",
-      image: sub.image
-        ? `${urls.baseUrl}${urls.categoryImages}${sub.image}`
-        : `${urls.baseUrl}default.png`,
+      image: sub.image,
       href: sub.slug,
       popular: !!sub.popular
     })),
@@ -77,9 +73,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
       duration: service.duration,
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
-      image: service.image
-        ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
-        : null,
+      image: service.image,
       slug: category.slug + '/' + service.slug
     };
   }));
@@ -90,9 +84,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
   const result = {
     title: category.title,
     description: trimWords(category.description, textLimits.categoryDescriptionWords),
-    image: category.image
-      ? `${urls.baseUrl}${urls.categoryImages}${category.image}`
-      : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2070&auto=format&fit=crop",
+    image: category.image,
     services: formattedServices,
     slug: category.slug,
     subcategories

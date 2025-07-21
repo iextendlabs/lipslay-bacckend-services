@@ -51,25 +51,6 @@ const formatCategory = (category) => {
   };
 };
 
-const formatCategories = (categories) => {
-  return categories.map((category) => ({
-    id: category.id,
-    title: category.title,
-    description: category.description || "",
-    image: buildUrl(urls.categoryImages, category.image),
-    popular: !!category.popular,
-    href: `${category.slug}`,
-    subcategories: (category.childCategories || []).map(sub => ({
-      id: sub.id,
-      title: sub.title,
-      description: sub.description || "",
-      image: buildUrl(urls.categoryImages, sub.image),
-      href: sub.slug,
-      popular: !!sub.popular
-    })),
-    slug: category.slug,
-  }));
-};
 
 const formatService = (service) => {
   return {
@@ -116,4 +97,4 @@ const formatService = (service) => {
   };
 };
 
-module.exports = { formatBookingSlots, formatCategory, formatCategories, formatService };
+module.exports = { formatBookingSlots, formatCategory, formatService };
