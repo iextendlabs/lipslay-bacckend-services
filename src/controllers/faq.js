@@ -11,8 +11,10 @@ const listFaqs = async (req, res) => {
     const faqs = await Faq.findAll({
       order: [['id', 'ASC']]
     });
-    cache.set(cacheKey, faqs);
-    res.json(faqs);
+    // Map to plain objects to avoid Sequelize instance issues
+    const plainFaqs = faqs.map(f => f.dataValues ? f.dataValues : f);
+    cache.set(cacheKey, plainFaqs);
+    res.json(plainFaqs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch FAQs' });
   }

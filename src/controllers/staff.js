@@ -170,6 +170,12 @@ const getStaffDetail = async (req, res, next) => {
       youtube_videos: youtubeVideos, // Added
     };
     cache.set(cacheKey, output);
+
+    // Map reviews to only return dataValues if present
+    if (output.reviews && Array.isArray(output.reviews)) {
+      output.reviews = output.reviews.map(r => r.dataValues ? r.dataValues : r);
+    }
+
     res.json(output);
   } catch (err) {
     if (err.name && err.name.startsWith("Sequelize")) {
