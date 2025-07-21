@@ -1,10 +1,34 @@
-
 const { ServiceCategory, Service, Review } = require('../models');
 const cache = require('../utils/cache');
+const striptags = require('striptags');
+const textLimits = require('../config/textLimits');
+const urls = require('../config/urls'); // Make sure this contains baseUrl
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require('../utils/currency');
-const textLimits = require('../config/textLimits');
-const striptags = require('striptags');
+
+function formatCategory(cat, urls) {
+  return {
+    id: cat.id,
+    title: cat.title,
+    description: cat.description || "",
+    image: cat.image
+      ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
+      : `${urls.baseUrl}default.png`,
+    popular: !!cat.popular,
+    href: `${cat.slug}`,
+    subcategories: (cat.childCategories || []).map(sub => ({
+      id: sub.id,
+      title: sub.title,
+      description: sub.description || "",
+      image: sub.image
+        ? `${urls.baseUrl}${urls.categoryImages}${sub.image}`
+        : `${urls.baseUrl}default.png`,
+      href: sub.slug,
+      popular: !!sub.popular
+    })),
+    slug: cat.slug,
+  };
+}
 
 const getCategoryBySlug = async (slug, zone_id) => {
   const cacheKey = `category_${slug}_${zone_id}`;
@@ -53,18 +77,25 @@ const getCategoryBySlug = async (slug, zone_id) => {
       duration: service.duration,
       rating: avgRating ? Number(avgRating) : null,
       description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
-      image: service.image,
+      image: service.image
+        ? `${urls.baseUrl}${urls.serviceImages}${service.image}`
+        : null,
       slug: category.slug + '/' + service.slug
     };
   }));
 
+  // Format subcategories
+  const subcategories = (category.childCategories || []).map(sub => (formatCategory(sub, urls)));
+
   const result = {
     title: category.title,
     description: trimWords(category.description, textLimits.categoryDescriptionWords),
-    image: category.image,
+    image: category.image
+      ? `${urls.baseUrl}${urls.categoryImages}${category.image}`
+      : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2070&auto=format&fit=crop",
     services: formattedServices,
     slug: category.slug,
-    subcategories: category.childCategories || []
+    subcategories
   };
   cache.set(cacheKey, result);
   return result;
@@ -85,8 +116,9 @@ const listMainCategories = async () => {
     }]
   });
 
-  cache.set(cacheKey, categories);
-  return categories;
+  const formatted = categories.map(cat => (formatCategory(cat, urls)));
+  cache.set(cacheKey, formatted);
+  return formatted;
 };
 
 module.exports = { getCategoryBySlug, listMainCategories };
