@@ -5,26 +5,8 @@ const textLimits = require('../config/textLimits');
 const urls = require('../config/urls'); // Make sure this contains baseUrl
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require('../utils/currency');
+const { formatCategory } = require('../formatters/responseFormatter');
 
-function formatCategory(cat, urls) {
-  return {
-    id: cat.id,
-    title: cat.title,
-    description: cat.description || "",
-    image: cat.image,
-    popular: !!cat.popular,
-    href: `${cat.slug}`,
-    subcategories: (cat.childCategories || []).map(sub => ({
-      id: sub.id,
-      title: sub.title,
-      description: sub.description || "",
-      image: sub.image,
-      href: sub.slug,
-      popular: !!sub.popular
-    })),
-    slug: cat.slug,
-  };
-}
 
 const getCategoryBySlug = async (slug, zone_id) => {
   const cacheKey = `category_${slug}_${zone_id}`;
@@ -99,13 +81,7 @@ const listMainCategories = async () => {
   if (cached) return cached;
 
   const categories = await ServiceCategory.findAll({
-    where: { parent_id: null, status: 1 },
-    include: [{
-      model: ServiceCategory,
-      as: 'childCategories',
-      where: { status: 1 },
-      required: false
-    }]
+    where: { parent_id: null, status: 1 }
   });
 
   const formatted = categories.map(cat => (formatCategory(cat, urls)));

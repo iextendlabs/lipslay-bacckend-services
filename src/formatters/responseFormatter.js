@@ -28,7 +28,7 @@ const formatCategory = (category) => {
     title: category.title,
     description: category.description,
     image: buildUrl(urls.categoryImages, category.image),
-    services: category.services.map((service) => ({
+    services: category?.services && category.services.map((service) => ({
       id: service.id,
       name: service.name,
       price: service.price,
@@ -40,7 +40,7 @@ const formatCategory = (category) => {
       slug: service.slug,
     })),
     slug: category.slug,
-    subcategories: category.subcategories.map((sub) => ({
+    subcategories:  category?.subcategories && category.subcategories.map((sub) => ({
       id: sub.id,
       title: sub.title,
       description: sub.description,
