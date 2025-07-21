@@ -6,7 +6,6 @@ async function getZoneData(zoneId) {
     const cacheKey = `staffZone:${zoneId}`;
     let staffZone = await cache.get(cacheKey);
     if (staffZone) return staffZone;
-    console.log(`Fetching zone data for zoneId: ${zoneId}`);
     staffZone = await StaffZone.findOne({
         where: { id: zoneId },
         include: [{ model: Currency, as: 'currency' }]
