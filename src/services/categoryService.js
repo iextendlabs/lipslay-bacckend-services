@@ -1,0 +1,92 @@
+
+const { ServiceCategory, Service, Review } = require('../models');
+const cache = require('../utils/cache');
+const { trimWords } = require('../utils/trimWords');
+const { formatCurrency } = require('../utils/currency');
+const textLimits = require('../config/textLimits');
+const striptags = require('striptags');
+
+const getCategoryBySlug = async (slug, zone_id) => {
+  const cacheKey = `category_${slug}_${zone_id}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  // Fetch category by slug, include subcategories and services via relation
+  const category = await ServiceCategory.findOne({
+    where: { slug, status: 1 },
+    include: [
+      {
+        model: ServiceCategory,
+        as: 'childCategories',
+        where: { status: 1 },
+        required: false
+      },
+      {
+        model: Service,
+        as: 'services',
+        through: { attributes: [] },
+        where: { status: 1 },
+        required: false,
+        attributes: ['id', 'name', 'price', 'discount', 'duration', 'description', 'image', 'slug']
+      }
+    ]
+  });
+
+  if (!category) {
+    return null;
+  }
+
+  // For each service, calculate average rating and format response
+  const formattedServices = await Promise.all((category.services || []).map(async (service) => {
+    const reviews = await Review.findAll({
+      where: { service_id: service.id },
+      attributes: ['rating']
+    });
+    const avgRating = reviews.length
+      ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+      : null;
+    return {
+      id: service.id,
+      name: service.name,
+      price: await formatCurrency(service.price ?? 0, zone_id, true),
+      discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
+      duration: service.duration,
+      rating: avgRating ? Number(avgRating) : null,
+      description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
+      image: service.image,
+      slug: category.slug + '/' + service.slug
+    };
+  }));
+
+  const result = {
+    title: category.title,
+    description: trimWords(category.description, textLimits.categoryDescriptionWords),
+    image: category.image,
+    services: formattedServices,
+    slug: category.slug,
+    subcategories: category.childCategories || []
+  };
+  cache.set(cacheKey, result);
+  return result;
+};
+
+const listMainCategories = async () => {
+  const cacheKey = 'main_categories';
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  const categories = await ServiceCategory.findAll({
+    where: { parent_id: null, status: 1 },
+    include: [{
+      model: ServiceCategory,
+      as: 'childCategories',
+      where: { status: 1 },
+      required: false
+    }]
+  });
+
+  cache.set(cacheKey, categories);
+  return categories;
+};
+
+module.exports = { getCategoryBySlug, listMainCategories };

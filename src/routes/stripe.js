@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const stripeController = require('../controllers/stripe');
+const stripeController = require('../controllers/stripe.controller.js');
 const authenticateToken = require('../middleware/authMiddleware');
 
 router.post('/stripe/payment', stripeController.stripePayment);
