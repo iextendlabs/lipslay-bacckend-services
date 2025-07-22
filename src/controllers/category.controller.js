@@ -16,7 +16,7 @@ const getCategoryBySlug = async (req, res) => {
       return res.status(404).json({ error: 'Category not found.' });
     }
 
-    res.json(responseFormatter.formatCategory(category));
+    res.json(await responseFormatter.formatCategory(category));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });

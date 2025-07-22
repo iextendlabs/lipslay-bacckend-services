@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const urls = require('../config/urls');
 
 /**
  * Download, resize, and convert an image to webp if not already exists.
@@ -12,6 +13,9 @@ const sharp = require('sharp');
  * @returns {Promise<string>} - The absolute path to the processed image, or null on error
  */
 async function getOrCreateWebpImage(originalUrl, outputDir, outputFilename, width, height) {
+  if (!originalUrl) {
+    return `${urls.baseUrl}/default.png`;
+  }
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, outputFilename);
   // If already exists, return path
@@ -26,7 +30,7 @@ async function getOrCreateWebpImage(originalUrl, outputDir, outputFilename, widt
       .toFile(outputPath);
     return outputPath;
   } catch (err) {
-    return null;
+    return `${urls.baseUrl}/default.png`;
   }
 }
 

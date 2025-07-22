@@ -15,7 +15,7 @@ const stripHtmlTags = require("../utils/stripHtmlTags");
 const { trimWords } = require("../utils/trimWords");
 const { formatCurrency } = require("../utils/currency");
 const cache = require("../utils/cache");
-const { formatServiceCard } = require("../formatters/responseFormatter");
+const { formatServiceCard, formatCategory } = require("../formatters/responseFormatter");
 
 /**
  * GET /staff?staff=slug_or_id
@@ -108,13 +108,11 @@ const getStaffDetail = async (req, res) => {
       })
     );
 
-    const formattedCategories = categories.map((cat) => ({
-      id: cat.id,
-      title: cat.title,
-      description: cat.description || "",
-      image: cat.image ? `${urls.baseUrl}${urls.categoryImages}${cat.image}` : `${urls.baseUrl}/default.png`,
-      href: cat.slug,
-    }));
+    const formattedCategories = await Promise.all(
+      categories.map(async (cat) => {
+        return await formatCategory(cat);
+      })
+    );
 
     const formattedImages = (images || [])
       .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : `${urls.baseUrl}/default.png`))

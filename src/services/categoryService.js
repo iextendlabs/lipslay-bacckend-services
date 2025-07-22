@@ -37,6 +37,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
     return null;
   }
 
+
   const formattedServices = await Promise.all((category.services || []).map(async service => {
     const reviews = await Review.findAll({
       where: { service_id: service.id },
@@ -59,11 +60,11 @@ const getCategoryBySlug = async (slug, zone_id) => {
       slug: category.slug + '/' + service.slug,
       hasOptionsOrQuote: !!service.quote // or add logic for options if needed
     };
-    return formatServiceCard(serviceObj);
+    return await formatServiceCard(serviceObj);
   }));
 
-  // Format subcategories
-  const formattedSubcategories = (category.childCategories || []).map(subcat => formatCategory(subcat, urls));
+  // Format subcategories (await async formatCategory)
+  const formattedSubcategories = await Promise.all((category.childCategories || []).map(async subcat => await formatCategory(subcat)));
 
   const result = {
     title: category.title,
@@ -86,7 +87,7 @@ const listMainCategories = async () => {
     where: { parent_id: null, status: 1 }
   });
 
-  const formatted = categories.map(cat => (formatCategory(cat, urls)));
+  const formatted = await Promise.all(categories.map(cat => formatCategory(cat)));
   cache.set(cacheKey, formatted);
   return formatted;
 };

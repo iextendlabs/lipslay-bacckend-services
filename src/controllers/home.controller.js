@@ -15,7 +15,7 @@ const stripHtmlTags = require("../utils/stripHtmlTags");
 const { formatCurrency } = require("../utils/currency");
 
 const cache = require('../utils/cache');
-const { formatServiceCard } = require("../formatters/responseFormatter");
+const { formatServiceCard, formatCategory } = require("../formatters/responseFormatter");
 
 const getHomeData = async (req, res) => {
   try {
@@ -49,16 +49,12 @@ const getHomeData = async (req, res) => {
         },
       ],
     });
-    const categoryCarousel = mainCategories.map((cat) => ({
-      id: cat.id,
-      title: cat.title,
-      description: cat.description || "",
-      image: cat.image
-        ? `${urls.baseUrl}${urls.categoryImages}${cat.image}`
-        : `${urls.baseUrl}/default.png`,
-      popular: !!cat.popular,
-      href: cat.slug,
-    }));
+
+    const categoryCarousel = await Promise.all(
+      mainCategories.map(async (cat) => {
+        return await formatCategory(cat);
+      })
+    );
 
     // Build featuredServices for all main categories with category info
     const featuredServices = [];

@@ -25,12 +25,23 @@ const formatBookingSlots = (slots) => {
   };
 };
 
-const formatCategory = (category) => {
+const formatCategory = async (category) => {
+  // Resize category image to 318x192 webp in categories folder
+  const originalUrl = buildUrl(urls.categoryImages, category.image);
+  const resizeDir = process.env.RESIZE_IMAGE_PATH;
+  const categoryFolder = path.join(resizeDir, 'categories');
+  const webpFilename = `${path.parse(category.image).name}_318x192.webp`;
+  let imageUrl = `${urls.baseUrl}/resize-images/categories/${webpFilename}`;
+  const processedPath = await getOrCreateWebpImage(originalUrl, categoryFolder, webpFilename, 318, 192);
+  if (!processedPath) {
+    imageUrl = originalUrl;
+  }
+
   return {
     id: category.id,
     title: category.title,
     description: category.description,
-    image: buildUrl(urls.categoryImages, category.image),
+    image: imageUrl,
     services: category?.services && category.services.map((service) => ({
       id: service.id,
       name: service.name,
@@ -39,7 +50,7 @@ const formatCategory = (category) => {
       duration: service.duration,
       rating: service.rating,
       description: service.description,
-      image: buildUrl(urls.serviceImages, service.image),
+      image: service.image,
       slug: service.slug,
     })),
     slug: category.slug,
@@ -48,7 +59,7 @@ const formatCategory = (category) => {
       id: sub.id,
       title: sub.title,
       description: sub.description,
-      image: buildUrl(urls.categoryImages, sub.image),
+      image: sub.image,
       href: sub.slug,
       popular: !!sub.popular
     })),
