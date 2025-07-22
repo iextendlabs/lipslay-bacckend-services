@@ -267,7 +267,7 @@ const getServiceBySlug = async (slug, zone_id) => {
     duration: service.duration,
     rating: avgRating ? Number(avgRating) : null,
     description: trimWords(striptags(service.short_description), 100),
-    longDescription: trimWords(service.description, 100),
+    longDescription: trimWords((service.description || '').replace(/https:\/\/lipslay\.com/g, 'https://partner.lipslay.com'), 100),
     image: service.image,
     gallery,
     faqs: faqs.map((f) => ({
