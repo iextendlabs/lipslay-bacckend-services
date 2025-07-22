@@ -380,5 +380,6 @@ module.exports = {
   StaffYoutubeVideo,
   Currency,
   Role,
-  OrderChat
+  OrderChat,
+  StaffToZone
 };

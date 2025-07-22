@@ -133,3 +133,4 @@ dist
 test_lipslay_Structure.sql
 package-lock.json
 config/firebase-service-account.json
+src/images

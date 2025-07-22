@@ -10,6 +10,7 @@ const {
   ServiceImage,
   ServiceOption,
   SubTitle,
+  StaffToZone,
 } = require("../models");
 const cache = require("../utils/cache");
 
@@ -45,6 +46,7 @@ const getServiceBySlug = async (slug, zone_id) => {
           "phone",
           "status",
           "charges",
+          "user_id",
         ],
         through: { attributes: [] },
         include: [
@@ -191,6 +193,7 @@ const getServiceBySlug = async (slug, zone_id) => {
             "phone",
             "status",
             "charges",
+            "user_id",
           ],
           through: { attributes: [] },
           include: [
@@ -214,6 +217,7 @@ const getServiceBySlug = async (slug, zone_id) => {
     staffFromCategories = categories.flatMap((cat) => cat.Staffs || []);
   }
 
+
   // Merge staff from service and categories, ensuring uniqueness by staff.id
   const staffDirect = service.Staffs || [];
   const allStaff = [...staffDirect, ...staffFromCategories];
@@ -226,28 +230,38 @@ const getServiceBySlug = async (slug, zone_id) => {
     }
   });
 
-  const staffMembers = Array.from(staffMap.values()).map((staff) => {
-    let avg_review_rating = null;
-    if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
-      avg_review_rating = (
-        staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        staff.reviews.length
-      ).toFixed(1);
-    }
-    return {
-      id: staff.id,
-      name: staff.User ? staff.User.name : "",
-      specialties:
-        staff.subTitles && staff.subTitles.length > 0
-          ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
-          : staff.sub_title
-          ? [staff.sub_title]
-          : ["Stylist"],
-      rating: avg_review_rating ? Number(avg_review_rating) : null,
-      charges: staff.charges,
-      image: staff.image,
-    };
+  // Get allowed user_ids for this zone
+  const staffToZoneRows = await StaffToZone.findAll({
+    where: { zone_id },
+    attributes: ["user_id"],
+    raw: true,
   });
+  const allowedUserIds = new Set(staffToZoneRows.map((row) => row.user_id));
+
+  const staffMembers = Array.from(staffMap.values())
+    .filter((staff) => allowedUserIds.has(staff.user_id))
+    .map((staff) => {
+      let avg_review_rating = null;
+      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+        avg_review_rating = (
+          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+          staff.reviews.length
+        ).toFixed(1);
+      }
+      return {
+        id: staff.id,
+        name: staff.User ? staff.User.name : "",
+        specialties:
+          staff.subTitles && staff.subTitles.length > 0
+            ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
+            : staff.sub_title
+            ? [staff.sub_title]
+            : ["Stylist"],
+        rating: avg_review_rating ? Number(avg_review_rating) : null,
+        charges: staff.charges,
+        image: staff.image,
+      };
+    });
 
   // Format options with currency
   const formattedOptions = await Promise.all((options || []).map(async (opt) => ({
