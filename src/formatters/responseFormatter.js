@@ -25,6 +25,7 @@ const formatBookingSlots = (slots) => {
 
 const formatCategory = (category) => {
   return {
+    id: category.id,
     title: category.title,
     description: category.description,
     image: buildUrl(urls.categoryImages, category.image),

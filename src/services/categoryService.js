@@ -8,9 +8,9 @@ const { formatCurrency } = require('../utils/currency');
 const { formatCategory } = require('../formatters/responseFormatter');
 
 const getCategoryBySlug = async (slug, zone_id) => {
-  // const cacheKey = `category_${slug}_${zone_id}`;
-  // const cached = cache.get(cacheKey);
-  // if (cached) return cached;
+  const cacheKey = `category_${slug}_${zone_id}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
 
   // Fetch category by slug, include subcategories and services via relation
   const category = await ServiceCategory.findOne({
@@ -53,6 +53,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
   }));
 
   // Format subcategories
+  const formattedSubcategories = (category.childCategories || []).map(subcat => formatCategory(subcat, urls));
 
   const result = {
     title: category.title,
@@ -60,9 +61,9 @@ const getCategoryBySlug = async (slug, zone_id) => {
     image: category.image,
     services: formattedServices,
     slug: category.slug,
-    subcategories: category.childCategories 
+    subcategories: formattedSubcategories
   };
-  // cache.set(cacheKey, result);
+  cache.set(cacheKey, result);
   return result;
 };
 
