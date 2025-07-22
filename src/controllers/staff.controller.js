@@ -15,6 +15,7 @@ const stripHtmlTags = require("../utils/stripHtmlTags");
 const { trimWords } = require("../utils/trimWords");
 const { formatCurrency } = require("../utils/currency");
 const cache = require("../utils/cache");
+const { formatServiceCard } = require("../formatters/responseFormatter");
 
 /**
  * GET /staff?staff=slug_or_id
@@ -91,16 +92,19 @@ const getStaffDetail = async (req, res) => {
               serviceReviews.length
             ).toFixed(1)
           : null;
-        return {
+        const serviceObj = {
+          id: s.id,
           name: s.name,
           price: await formatCurrency(s.price ?? 0, zone_id, true),
           discount: s.discount != null && s.discount > 0 ? await formatCurrency(s.discount, zone_id, true) : null,
           rating: avgRating ? Number(avgRating) : null,
-          image: s.image ? `${urls.baseUrl}${urls.serviceImages}${s.image}` : `${urls.baseUrl}/default.png`,
+          image: s.image,
           description: trimWords(stripHtmlTags(s.description), textLimits.serviceDescriptionWords),
           duration: s.duration,
           slug: cat ? cat.slug + "/" + s.slug : s.slug,
+          hasOptionsOrQuote: !!s.quote // or add logic for options if needed
         };
+        return formatServiceCard(serviceObj);
       })
     );
 

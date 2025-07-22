@@ -5,7 +5,7 @@ const textLimits = require('../config/textLimits');
 const urls = require('../config/urls'); // Make sure this contains baseUrl
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require('../utils/currency');
-const { formatCategory } = require('../formatters/responseFormatter');
+const { formatCategory, formatServiceCard } = require('../formatters/responseFormatter');
 
 const getCategoryBySlug = async (slug, zone_id) => {
   const cacheKey = `category_${slug}_${zone_id}`;
@@ -37,19 +37,29 @@ const getCategoryBySlug = async (slug, zone_id) => {
     return null;
   }
 
-  // For each service, calculate average rating and format response
   const formattedServices = await Promise.all((category.services || []).map(async service => {
-    return {
+    const reviews = await Review.findAll({
+      where: { service_id: service.id },
+      attributes: ["rating"]
+    });
+    let avgRating = null;
+    if (reviews.length > 0) {
+      const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+      avgRating = parseFloat((total / reviews.length).toFixed(2));
+    }
+    const serviceObj = {
       id: service.id,
       name: service.name,
       price: await formatCurrency(service.price ?? 0, zone_id, true),
       discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
       duration: service.duration,
-      rating: service?.rating || null,
+      rating: avgRating,
       description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
       image: service.image,
-      slug: category.slug + '/' + service.slug
+      slug: category.slug + '/' + service.slug,
+      hasOptionsOrQuote: !!service.quote // or add logic for options if needed
     };
+    return formatServiceCard(serviceObj);
   }));
 
   // Format subcategories

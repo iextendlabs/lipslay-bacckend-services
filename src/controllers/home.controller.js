@@ -15,6 +15,7 @@ const stripHtmlTags = require("../utils/stripHtmlTags");
 const { formatCurrency } = require("../utils/currency");
 
 const cache = require('../utils/cache');
+const { formatServiceCard } = require("../formatters/responseFormatter");
 
 const getHomeData = async (req, res) => {
   try {
@@ -73,28 +74,31 @@ const getHomeData = async (req, res) => {
                 reviews.length
               ).toFixed(1)
             : null;
-          return {
+          const serviceObj = {
+            id: s.id,
             name: s.name,
             price: await formatCurrency(s.price ?? 0, zone_id, true),
             discount: s.discount != null && s.discount > 0 ? await formatCurrency(s.discount, zone_id, true) : null,
             rating: avgRating ? Number(avgRating) : null,
-            image: s.image
-              ? `${urls.baseUrl}${urls.serviceImages}${s.image}`
-              : `${urls.baseUrl}/default.png`,
+            image: s.image,
             description: trimWords(
               stripHtmlTags(s.description),
               textLimits.serviceDescriptionWords
             ),
             duration: s.duration,
             slug: cat.slug + "/" + s.slug,
+            hasOptionsOrQuote: !!s.quote 
           };
+          return formatServiceCard(serviceObj);
         })
       );
-      featuredServices.push({
-        name: cat.title,
-        slug: cat.slug,
-        services: formatted,
-      });
+      if (formatted.length > 0) {
+        featuredServices.push({
+          name: cat.title,
+          slug: cat.slug,
+          services: formatted,
+        });
+      }
     }
 
     // STAFF MEMBERS (example: top 5 staff)

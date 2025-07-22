@@ -100,4 +100,19 @@ const formatService = (service) => {
   };
 };
 
-module.exports = { formatBookingSlots, formatCategory, formatService };
+const formatServiceCard = (service) => {
+  return {
+    id: service.id,
+    name: service.name,
+    price: service.price,
+    discount: service.discount,
+    duration: service.duration,
+    rating: service.rating,
+    description: service.description,
+    image: buildUrl(urls.serviceImages, service.image),
+    slug: service.slug,
+    hasOptionsOrQuote: service.hasOptionsOrQuote,
+  };
+};
+
+module.exports = { formatBookingSlots, formatCategory, formatService, formatServiceCard };

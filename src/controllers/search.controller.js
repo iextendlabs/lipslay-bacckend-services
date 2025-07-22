@@ -1,10 +1,11 @@
 const { Op, literal } = require('sequelize');
-const { Service, ServiceCategory, ServiceOption } = require('../models');
+const { Service, ServiceCategory, ServiceOption, Review } = require('../models');
 const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require("../utils/currency");
 const { baseUrl, serviceImages } = require('../config/urls');
+const { formatServiceCard } = require('../formatters/responseFormatter');
 
 const searchServices = async (req, res) => {
   try {
@@ -32,21 +33,33 @@ const searchServices = async (req, res) => {
           attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
         });
       }
-      return res.json({ services: service ? [{
+
+      const reviews = await Review.findAll({
+        where: { service_id: service.id },
+        attributes: ["user_name", "rating", "created_at", "content", "video"],
+      });
+
+      let avgRating = 0;
+      if (reviews.length > 0) {
+        const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+        avgRating = parseFloat((total / reviews.length).toFixed(2));
+      }
+
+      const hasOptionsOrQuote = !!(service.quote || (options && options.length > 0));
+
+      const serviceObj = service ? {
         id: service.id,
         name: service.name,
-        category: null,
-        quote: service.quote ? true : false,
         price: await formatCurrency(service.price ?? 0, zone_id, true),
         discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
         duration: service.duration,
+        rating: avgRating,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
-        image: baseUrl + serviceImages + service.image,
-        keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
+        image: service.image,
         slug: service.ServiceCategories && service.ServiceCategories[0] ? service.ServiceCategories[0].slug + '/' + service.slug : service.slug,
-        rating: service.rating || null,
-        options: options.map(o => o.toJSON())
-      }] : [] });
+        hasOptionsOrQuote,
+      } : null;
+      return res.json({ services: serviceObj ? [formatServiceCard(serviceObj)] : [] });
     }
 
     if (!q || q.trim() === '') {
@@ -81,26 +94,36 @@ const searchServices = async (req, res) => {
       .filter(service => service.ServiceCategories && service.ServiceCategories.length > 0)
       .map(async service => {
         const firstCategory = service.ServiceCategories[0];
-        // Fetch options for this service using the ServiceOption model directly
         const options = await ServiceOption.findAll({
           where: { service_id: service.id },
           attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
         });
-        return {
+
+        const reviews = await Review.findAll({
+          where: { service_id: service.id },
+          attributes: ["rating"]
+        });
+        let avgRating = null;
+        if (reviews.length > 0) {
+          const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+          avgRating = parseFloat((total / reviews.length).toFixed(2));
+        }
+
+        const hasOptionsOrQuote = !!(service.quote || (options && options.length > 0));
+
+        const serviceObj = {
           id: service.id,
           name: service.name,
-          quote: service.quote ? true : false,
-          category: null,
           price: await formatCurrency(service.price ?? 0, zone_id, true),
           discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
           duration: service.duration,
+          rating: avgRating,
           description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
-          image: baseUrl + serviceImages + service.image,
-          keywords: service.meta_keywords ? service.meta_keywords.split(',').map(k => k.trim()) : [],
+          image: service.image,
           slug: firstCategory.slug + '/' + service.slug,
-          rating: service.rating || null,
-          options: options.map(o => o.toJSON()) // ensure plain objects
+          hasOptionsOrQuote,
         };
+        return formatServiceCard(serviceObj);
       }));
     res.json({ services: formatted });
   } catch (error) {
