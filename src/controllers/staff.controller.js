@@ -177,6 +177,22 @@ const getAllStaff = async (req, res) => {
         {
           model: require("../models").User,
           attributes: ["name"],
+          include: [
+            {
+              model: require("../models").ModelHasRoles,
+              as: "modelHasRoles",
+              where: { model_type: "App\\Models\\User" },
+              required: true,
+              include: [
+                {
+                  model: require("../models").Role,
+                  as: "role",
+                  where: { name: "Staff" },
+                  required: true,
+                },
+              ],
+            },
+          ],
         },
         {
           model: SubTitle,

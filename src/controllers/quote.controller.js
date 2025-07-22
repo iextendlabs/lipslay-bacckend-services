@@ -105,7 +105,29 @@ const store = async (req, res) => {
   const zoneStaffIds = zoneStaffMembers.map((staff) => staff.user_id);
 
   // Get intersection of staffIds and zoneStaffIds
-  const eligibleStaffIds = staffIds.filter((id) => zoneStaffIds.includes(id));
+  let eligibleStaffIds = staffIds.filter((id) => zoneStaffIds.includes(id));
+
+  if (eligibleStaffIds.length > 0) {
+    const { ModelHasRoles, Role } = require("../models");
+    const staffRoleUsers = await ModelHasRoles.findAll({
+      where: {
+        model_type: "App\\Models\\User",
+        model_id: eligibleStaffIds,
+      },
+      include: [
+        {
+          model: Role,
+          as: "role",
+          where: { name: "Staff" },
+          required: true,
+        },
+      ],
+      attributes: ["model_id"],
+      raw: true,
+    });
+    const allowedUserIds = new Set(staffRoleUsers.map((r) => r.model_id));
+    eligibleStaffIds = eligibleStaffIds.filter((id) => allowedUserIds.has(id));
+  }
 
   let staffs = [];
   if (eligibleStaffIds.length > 0) {

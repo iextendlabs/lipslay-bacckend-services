@@ -238,30 +238,52 @@ const getServiceBySlug = async (slug, zone_id) => {
   });
   const allowedUserIds = new Set(staffToZoneRows.map((row) => row.user_id));
 
-  const staffMembers = Array.from(staffMap.values())
-    .filter((staff) => allowedUserIds.has(staff.user_id))
-    .map((staff) => {
-      let avg_review_rating = null;
-      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
-        avg_review_rating = (
-          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-          staff.reviews.length
-        ).toFixed(1);
-      }
-      return {
-        id: staff.id,
-        name: staff.User ? staff.User.name : "",
-        specialties:
-          staff.subTitles && staff.subTitles.length > 0
-            ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
-            : staff.sub_title
-            ? [staff.sub_title]
-            : ["Stylist"],
-        rating: avg_review_rating ? Number(avg_review_rating) : null,
-        charges: staff.charges,
-        image: staff.image,
-      };
+  let staffMembers = Array.from(staffMap.values()).filter((staff) => allowedUserIds.has(staff.user_id));
+
+  if (staffMembers.length > 0) {
+    const { ModelHasRoles, Role } = require("../models");
+    const staffRoleUsers = await ModelHasRoles.findAll({
+      where: {
+        model_type: "App\\Models\\User",
+        model_id: staffMembers.map((s) => s.user_id),
+      },
+      include: [
+        {
+          model: Role,
+          as: "role",
+          where: { name: "Staff" },
+          required: true,
+        },
+      ],
+      attributes: ["model_id"],
+      raw: true,
     });
+    const allowedRoleUserIds = new Set(staffRoleUsers.map((r) => r.model_id));
+    staffMembers = staffMembers.filter((staff) => allowedRoleUserIds.has(staff.user_id));
+  }
+
+  staffMembers = staffMembers.map((staff) => {
+    let avg_review_rating = null;
+    if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+      avg_review_rating = (
+        staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+        staff.reviews.length
+      ).toFixed(1);
+    }
+    return {
+      id: staff.id,
+      name: staff.User ? staff.User.name : "",
+      specialties:
+        staff.subTitles && staff.subTitles.length > 0
+          ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
+          : staff.sub_title
+          ? [staff.sub_title]
+          : ["Stylist"],
+      rating: avg_review_rating ? Number(avg_review_rating) : null,
+      charges: staff.charges,
+      image: staff.image,
+    };
+  });
 
   // Format options with currency
   const formattedOptions = await Promise.all((options || []).map(async (opt) => ({

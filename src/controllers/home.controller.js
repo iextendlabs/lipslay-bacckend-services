@@ -6,7 +6,9 @@ const {
   User,
   Review,
   SubTitle,
-  Setting, // Add Setting model
+  Setting,
+  ModelHasRoles,
+  Role,
 } = require("../models");
 const urls = require("../config/urls");
 const { trimWords } = require("../utils/trimWords");
@@ -97,11 +99,29 @@ const getHomeData = async (req, res) => {
       }
     }
 
-    // STAFF MEMBERS (example: top 5 staff)
-    let staffMembers = await Staff.findAll({
+    const assignedStaff = await Staff.findAll({
       where: { status: 1, feature: 1 },
       include: [
-        { model: User, attributes: ["name"] },
+        {
+          model: User,
+          attributes: ["name"],
+          include: [
+            {
+              model: ModelHasRoles,
+              as: "modelHasRoles",
+              where: { model_type: "App\\Models\\User" },
+              required: false,
+              include: [
+                {
+                  model: Role,
+                  as: "role",
+                  where: { name: "Staff" },
+                  required: true,
+                },
+              ],
+            },
+          ],
+        },
         {
           model: SubTitle,
           as: "subTitles",
@@ -112,7 +132,7 @@ const getHomeData = async (req, res) => {
       ],
       limit: 5,
     });
-    staffMembers = staffMembers.map((staff) => {
+    staffMembers = assignedStaff.map((staff) => {
       let avg_review_rating = null;
       if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
         avg_review_rating = (
