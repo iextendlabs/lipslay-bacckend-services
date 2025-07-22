@@ -1,6 +1,8 @@
 
 const urls = require('../config/urls');
 const { buildUrl } = require('../utils/urlBuilder');
+const path = require('path');
+const { getOrCreateWebpImage } = require('../utils/image');
 
 const formatBookingSlots = (slots) => {
   return {
@@ -100,7 +102,17 @@ const formatService = (service) => {
   };
 };
 
-const formatServiceCard = (service) => {
+const formatServiceCard = async (service) => {
+  const originalUrl = buildUrl(urls.serviceImages, service.image);
+  const resizeDir = process.env.RESIZE_IMAGE_PATH;
+  const serviceFolder = path.join(resizeDir, 'services');
+  const webpFilename = `${path.parse(service.image).name}_627x192.webp`;
+  let imageUrl = `${urls.baseUrl}/resize-images/services/${webpFilename}`;
+  const processedPath = await getOrCreateWebpImage(originalUrl, serviceFolder, webpFilename, 627, 192);
+  if (!processedPath) {
+    imageUrl = originalUrl;
+  }
+
   return {
     id: service.id,
     name: service.name,
@@ -109,7 +121,7 @@ const formatServiceCard = (service) => {
     duration: service.duration,
     rating: service.rating,
     description: service.description,
-    image: buildUrl(urls.serviceImages, service.image),
+    image: imageUrl,
     slug: service.slug,
     hasOptionsOrQuote: service.hasOptionsOrQuote,
   };
