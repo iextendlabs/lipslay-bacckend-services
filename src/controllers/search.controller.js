@@ -4,7 +4,6 @@ const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require("../utils/currency");
-const { baseUrl, serviceImages } = require('../config/urls');
 const { formatServiceCard } = require('../formatters/responseFormatter');
 
 const searchServices = async (req, res) => {
@@ -56,7 +55,7 @@ const searchServices = async (req, res) => {
         rating: avgRating,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
         image: service.image,
-        slug: service.ServiceCategories && service.ServiceCategories[0] ? service.ServiceCategories[0].slug + '/' + service.slug : service.slug,
+        slug: service.slug,
         hasOptionsOrQuote,
       } : null;
       return res.json({ services: serviceObj ? [formatServiceCard(serviceObj)] : [] });
@@ -76,12 +75,6 @@ const searchServices = async (req, res) => {
           { meta_keywords: { [Op.like]: `%${q}%` } }
         ]
       },
-      include: [{
-        model: ServiceCategory,
-        as: 'ServiceCategories',
-        attributes: ['title', 'slug'],
-        through: { attributes: [] }
-      }],
       limit: 20,
       order: [
         [literal(`CASE WHEN Service.name LIKE ${Service.sequelize.escape('%' + q + '%')} THEN 1 ELSE 2 END`), 'ASC'],
@@ -90,10 +83,7 @@ const searchServices = async (req, res) => {
       ]
     });
 
-    const formatted = await Promise.all(services
-      .filter(service => service.ServiceCategories && service.ServiceCategories.length > 0)
-      .map(async service => {
-        const firstCategory = service.ServiceCategories[0];
+    const formatted = await Promise.all(services.map(async service => {
         const options = await ServiceOption.findAll({
           where: { service_id: service.id },
           attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
@@ -120,7 +110,7 @@ const searchServices = async (req, res) => {
           rating: avgRating,
           description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
           image: service.image,
-          slug: firstCategory.slug + '/' + service.slug,
+          slug:  service.slug,
           hasOptionsOrQuote,
         };
         return formatServiceCard(serviceObj);

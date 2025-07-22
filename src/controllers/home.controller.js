@@ -24,6 +24,7 @@ const getHomeData = async (req, res) => {
     const zone_id = req.query.zoneId ?? null;
     const cacheKey = `homeData_${zone_id}`;
     const cached = cache.get(cacheKey);
+    let staffMembers = [];
     if (cached) {
       return res.json(cached);
     }

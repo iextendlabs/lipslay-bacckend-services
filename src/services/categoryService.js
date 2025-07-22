@@ -2,7 +2,6 @@ const { ServiceCategory, Service, Review } = require('../models');
 const cache = require('../utils/cache');
 const striptags = require('striptags');
 const textLimits = require('../config/textLimits');
-const urls = require('../config/urls'); // Make sure this contains baseUrl
 const { trimWords } = require('../utils/trimWords');
 const { formatCurrency } = require('../utils/currency');
 const { formatCategory, formatServiceCard } = require('../formatters/responseFormatter');
@@ -57,7 +56,7 @@ const getCategoryBySlug = async (slug, zone_id) => {
       rating: avgRating,
       description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
       image: service.image,
-      slug: category.slug + '/' + service.slug,
+      slug: service.slug,
       hasOptionsOrQuote: !!service.quote // or add logic for options if needed
     };
     return await formatServiceCard(serviceObj);
