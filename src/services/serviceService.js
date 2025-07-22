@@ -78,7 +78,8 @@ const getServiceBySlug = async (slug, zone_id) => {
           "duration",
           "image",
           "slug",
-          "quote"
+          "quote",
+          "status"
         ],
       },
       {
@@ -91,6 +92,7 @@ const getServiceBySlug = async (slug, zone_id) => {
           "duration",
           "image",
           "slug",
+          "status"
         ],
       },
     ],
@@ -132,38 +134,46 @@ const getServiceBySlug = async (slug, zone_id) => {
 
   const gallery = images.map((img) => img.image);
 
-   const addOns = await Promise.all((service.AddOns || []).map(async (addon) => {
-    const addonOptions = await ServiceOption.findAll({
-      where: { service_id: addon.id },
-      attributes: [
-        "id",
-        "option_name",
-        "option_price",
-        "option_duration",
-        "image",
-      ],
-    });
-    return {
-      id: addon.id,
-      name: addon.name,
-      price: await formatCurrency(addon.price ?? 0, zone_id, true),
-      discount: addon.discount != null && addon.discount > 0 ? await formatCurrency(addon.discount, zone_id, true) : null,
-      duration: addon.duration,
-      image: addon.image,
-      slug: addon.slug,
-      hasOptionsOrQuote: (Array.isArray(addonOptions) && addonOptions.length > 0) || addon.quote === 1 ? true : false
-    };
-  }));
+ const addOns = await Promise.all(
+   (service.AddOns || [])
+     .filter(addon => addon.status == 1)
+     .map(async (addon) => {
+       const addonOptions = await ServiceOption.findAll({
+         where: { service_id: addon.id },
+         attributes: [
+           "id",
+           "option_name",
+           "option_price",
+           "option_duration",
+           "image",
+         ],
+       });
+       return {
+         id: addon.id,
+         name: addon.name,
+         price: await formatCurrency(addon.price ?? 0, zone_id, true),
+         discount: addon.discount != null && addon.discount > 0 ? await formatCurrency(addon.discount, zone_id, true) : null,
+         duration: addon.duration,
+         image: addon.image,
+         slug: addon.slug,
+         hasOptionsOrQuote: (Array.isArray(addonOptions) && addonOptions.length > 0) || addon.quote === 1 ? true : false
+       };
+     })
+ );
 
-  const packages = await Promise.all((service.Packages || []).map(async (pkg) => ({
-    id: pkg.id,
-    name: pkg.name,
-    price: await formatCurrency(pkg.price ?? 0, zone_id, true),
-    discount: pkg.discount,
-    duration: pkg.duration,
-    image: pkg.image,
-    slug: pkg.slug,
-  })));
+  const packages = await Promise.all(
+    (service.Packages || [])
+      .filter(pkg => pkg.status == 1)
+      .map(async (pkg) => ({
+        id: pkg.id,
+        name: pkg.name,
+        price: await formatCurrency(pkg.price ?? 0, zone_id, true),
+        discount: pkg.discount,
+        duration: pkg.duration,
+        image: pkg.image,
+        slug: pkg.slug,
+      }))
+  );
 
   const avgRating = reviews.length
     ? (
