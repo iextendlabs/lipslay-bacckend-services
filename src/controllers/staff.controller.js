@@ -207,30 +207,32 @@ const getAllStaff = async (req, res) => {
       ]
     });
 
-    staffMembers = staffMembers.map((staff) => {
-      let avg_review_rating = null;
-      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
-        avg_review_rating = (
-          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-          staff.reviews.length
-        ).toFixed(1);
-      }
-      return {
-        id: staff.id,
-        name: staff.User ? staff.User.name : "",
-        specialties:
-          staff.subTitles && staff.subTitles.length > 0
-            ? staff.subTitles.map((st) => st.name).slice(0, 6)
-            : staff.sub_title
-            ? [staff.sub_title]
-            : ["Stylist"],
-        rating: avg_review_rating ? Number(avg_review_rating) : null,
-        charges: staff.charges,
-        image: staff.image
-          ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : `${urls.baseUrl}/default.png`,
-      };
-    });
+    staffMembers = staffMembers
+      .filter((staff) => staff.User) // Only include staff whose User is not null (i.e., has Staff role)
+      .map((staff) => {
+        let avg_review_rating = null;
+        if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+          avg_review_rating = (
+            staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+            staff.reviews.length
+          ).toFixed(1);
+        }
+        return {
+          id: staff.id,
+          name: staff.User ? staff.User.name : "",
+          specialties:
+            staff.subTitles && staff.subTitles.length > 0
+              ? staff.subTitles.map((st) => st.name).slice(0, 6)
+              : staff.sub_title
+              ? [staff.sub_title]
+              : ["Stylist"],
+          rating: avg_review_rating ? Number(avg_review_rating) : null,
+          charges: staff.charges,
+          image: staff.image
+            ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
+            : `${urls.baseUrl}/default.png`,
+        };
+      });
 
     const result = { staff: staffMembers };
     cache.set(cacheKey, result);
