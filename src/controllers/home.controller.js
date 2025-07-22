@@ -92,7 +92,7 @@ const getHomeData = async (req, res) => {
               textLimits.serviceDescriptionWords
             ),
             duration: s.duration,
-            slug: cat.slug + "/" + s.slug,
+            slug: s.slug,
             hasOptionsOrQuote: !!s.quote,
           };
           return formatServiceCard(serviceObj);

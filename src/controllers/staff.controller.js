@@ -101,7 +101,7 @@ const getStaffDetail = async (req, res) => {
           image: s.image,
           description: trimWords(stripHtmlTags(s.description), textLimits.serviceDescriptionWords),
           duration: s.duration,
-          slug: cat ? cat.slug + "/" + s.slug : s.slug,
+          slug: s.slug,
           hasOptionsOrQuote: !!s.quote // or add logic for options if needed
         };
         return formatServiceCard(serviceObj);
