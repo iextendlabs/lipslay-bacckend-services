@@ -146,9 +146,9 @@ const formatStaffCard = async (input) => {
   let imageUrl = originalUrl;
   if (image) {
     const staffFolder = path.join(resizeDir, 'staff');
-    const webpFilename = `${path.parse(image).name}_159x128.webp`;
+    const webpFilename = `${path.parse(image).name}_318x256.webp`;
     imageUrl = `${urls.baseUrl}/resize-images/staff/${webpFilename}`;
-    const processedPath = await getOrCreateWebpImage(originalUrl, staffFolder, webpFilename, 159, 128);
+    const processedPath = await getOrCreateWebpImage(originalUrl, staffFolder, webpFilename, 318, 256);
     if (!processedPath) {
       imageUrl = originalUrl;
     }
