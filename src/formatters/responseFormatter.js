@@ -138,4 +138,48 @@ const formatServiceCard = async (service) => {
   };
 };
 
-module.exports = { formatBookingSlots, formatCategory, formatService, formatServiceCard };
+const formatStaffCard = async (input) => {
+  const staff = input && input.staff ? input.staff : input;
+  const image = staff.image || '';
+  const originalUrl = buildUrl(urls.staffImages, image);
+  const resizeDir = process.env.RESIZE_IMAGE_PATH;
+  let imageUrl = originalUrl;
+  if (image) {
+    const staffFolder = path.join(resizeDir, 'staff');
+    const webpFilename = `${path.parse(image).name}_159x128.webp`;
+    imageUrl = `${urls.baseUrl}/resize-images/staff/${webpFilename}`;
+    const processedPath = await getOrCreateWebpImage(originalUrl, staffFolder, webpFilename, 159, 128);
+    if (!processedPath) {
+      imageUrl = originalUrl;
+    }
+  }
+
+  let specialties = staff.specialties;
+  if (!specialties) {
+    specialties = staff.subTitles && staff.subTitles.length > 0
+      ? staff.subTitles.map((st) => st.name).slice(0, 6)
+      : staff.sub_title
+      ? [staff.sub_title]
+      : ["Stylist"];
+  }
+
+  let avg_review_rating = null;
+  if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
+    avg_review_rating = (
+      staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+      staff.reviews.length
+    ).toFixed(1);
+    avg_review_rating = Number(avg_review_rating);
+  }
+
+  return {
+    id: staff.id,
+    name: staff.User ? staff.User.name : "",
+    rating: avg_review_rating,
+    specialties,
+    image: imageUrl,
+    charges: staff.charges,
+  };
+};
+
+module.exports = { formatBookingSlots, formatCategory, formatService, formatServiceCard, formatStaffCard };

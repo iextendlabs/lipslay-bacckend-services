@@ -16,8 +16,12 @@ const textLimits = require("../config/textLimits");
 const stripHtmlTags = require("../utils/stripHtmlTags");
 const { formatCurrency } = require("../utils/currency");
 
-const cache = require('../utils/cache');
-const { formatServiceCard, formatCategory } = require("../formatters/responseFormatter");
+const cache = require("../utils/cache");
+const {
+  formatServiceCard,
+  formatCategory,
+  formatStaffCard,
+} = require("../formatters/responseFormatter");
 
 const getHomeData = async (req, res) => {
   try {
@@ -77,7 +81,10 @@ const getHomeData = async (req, res) => {
             id: s.id,
             name: s.name,
             price: await formatCurrency(s.price ?? 0, zone_id, true),
-            discount: s.discount != null && s.discount > 0 ? await formatCurrency(s.discount, zone_id, true) : null,
+            discount:
+              s.discount != null && s.discount > 0
+                ? await formatCurrency(s.discount, zone_id, true)
+                : null,
             rating: avgRating ? Number(avgRating) : null,
             image: s.image,
             description: trimWords(
@@ -86,7 +93,7 @@ const getHomeData = async (req, res) => {
             ),
             duration: s.duration,
             slug: cat.slug + "/" + s.slug,
-            hasOptionsOrQuote: !!s.quote 
+            hasOptionsOrQuote: !!s.quote,
           };
           return formatServiceCard(serviceObj);
         })
@@ -133,30 +140,10 @@ const getHomeData = async (req, res) => {
       ],
       limit: 5,
     });
-    staffMembers = assignedStaff.map((staff) => {
-      let avg_review_rating = null;
-      if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
-        avg_review_rating = (
-          staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-          staff.reviews.length
-        ).toFixed(1);
-      }
-      return {
-        id: staff.id,
-        name: staff.User ? staff.User.name : "",
-        specialties:
-          staff.subTitles && staff.subTitles.length > 0
-            ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
-            : staff.sub_title
-            ? [staff.sub_title]
-            : ["Stylist"],
-        rating: avg_review_rating ? Number(avg_review_rating) : null,
-        charges: staff.charges,
-        image: staff.image
-          ? `${urls.baseUrl}${urls.staffImages}${staff.image}`
-          : `${urls.baseUrl}/default.png`,
-      };
-    });
+    const staffRaw = assignedStaff.filter((staff) => staff.User);
+    staffMembers = await Promise.all(
+      staffRaw.map((staff) => formatStaffCard({ staff }))
+    );
 
     // TESTIMONIALS (latest 3 reviews)
     const testimonialsRaw = await Review.findAll({

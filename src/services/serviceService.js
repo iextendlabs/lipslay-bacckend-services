@@ -262,28 +262,10 @@ const getServiceBySlug = async (slug, zone_id) => {
     staffMembers = staffMembers.filter((staff) => allowedRoleUserIds.has(staff.user_id));
   }
 
-  staffMembers = staffMembers.map((staff) => {
-    let avg_review_rating = null;
-    if (Array.isArray(staff.reviews) && staff.reviews.length > 0) {
-      avg_review_rating = (
-        staff.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        staff.reviews.length
-      ).toFixed(1);
-    }
-    return {
-      id: staff.id,
-      name: staff.User ? staff.User.name : "",
-      specialties:
-        staff.subTitles && staff.subTitles.length > 0
-          ? staff.subTitles.map((st) => st.name).slice(0, 6) // max 6 specialties
-          : staff.sub_title
-          ? [staff.sub_title]
-          : ["Stylist"],
-      rating: avg_review_rating ? Number(avg_review_rating) : null,
-      charges: staff.charges,
-      image: staff.image,
-    };
-  });
+  const { formatStaffCard } = require("../formatters/responseFormatter");
+  staffMembers = await Promise.all(
+    staffMembers.map((staff) => formatStaffCard({ staff }))
+  );
 
   // Format options with currency
   const formattedOptions = await Promise.all((options || []).map(async (opt) => ({
