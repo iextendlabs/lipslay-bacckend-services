@@ -28,6 +28,7 @@ async function findOrCreateUser(input) {
 // Formats booking data into groupedBooking
 async function formattingBookingData(bookingData) {
   const groupedBooking = {};
+  const groupedBookingOption = {};
 
   for (const booking of bookingData) {
     const { date, service_staff_id, time_slot_id, services } = booking;
@@ -36,17 +37,85 @@ async function formattingBookingData(bookingData) {
     const service_ids = (services || []).map((s) => s.service_id);
     groupedBooking[key] = groupedBooking[key] || [];
     groupedBooking[key].push(...service_ids);
+
+    for (const service of services || []) {
+      const serviceId = service.service_id;
+      const optionIds = service.option_ids || [];
+
+      // Only process if there are options
+      if (optionIds.length > 0) {
+        const options = await ServiceOption.findAll({
+          where: { id: optionIds },
+        });
+        const totalPrice = options.reduce(
+          (sum, opt) => sum + Number(opt.option_price || 0),
+          0
+        );
+        const formattedDuration = calculateTotalDuration(options);
+
+        groupedBookingOption[serviceId] = {
+          options,
+          total_price: totalPrice,
+          total_duration: formattedDuration,
+        };
+      }
+    }
   }
 
-  return [bookingData, groupedBooking];
+  return [bookingData, groupedBookingOption, groupedBooking];
+}
+
+function calculateTotalDuration(options) {
+  let totalDuration = 0;
+
+  for (const opt of options) {
+    if (opt.option_duration) {
+      const durationStr = String(opt.option_duration).toLowerCase();
+      const matches = durationStr.match(
+        /(\d+)\s*(hour|hours|hr|h|min|mins|mints|minute|minutes|m|mint)?/i
+      );
+      if (matches) {
+        const value = parseInt(matches[1], 10);
+        const unit = matches[2] ? matches[2] : "min";
+        switch (unit) {
+          case "hour":
+          case "hours":
+          case "hr":
+          case "h":
+            totalDuration += value * 60;
+            break;
+          case "min":
+          case "mins":
+          case "mints":
+          case "minute":
+          case "minutes":
+          case "m":
+          case "mint":
+          default:
+            totalDuration += value;
+            break;
+        }
+      }
+    }
+  }
+
+  const hours = Math.floor(totalDuration / 60);
+  const minutes = totalDuration % 60;
+
+  let formattedDuration = 0;
+  if (hours > 0 && minutes > 0) {
+    formattedDuration = `${hours} hours ${minutes} minutes`;
+  } else if (hours > 0) {
+    formattedDuration = `${hours} hours`;
+  } else if (minutes > 0) {
+    formattedDuration = `${minutes} minutes`;
+  }
+
+  return formattedDuration;
 }
 
 // Applies coupon logic based on type and returns discount
-async function getCouponDiscount(
-  coupon,
-  services,
-  sub_total
-) {
+async function getCouponDiscount(coupon, services, sub_total) {
   let discount = 0;
 
   if (coupon.type === "Fixed Amount") {
@@ -69,7 +138,9 @@ async function getAffiliateId(code) {
 // Stub for driver assignment
 async function getDriverForTimeSlot(staff_id, date, timeSlotId) {
   // Convert date to day name (e.g., 'Monday')
-  const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+  const dayName = new Date(date).toLocaleDateString("en-US", {
+    weekday: "long",
+  });
   const staffDriver = await StaffDriver.findOne({
     where: {
       staff_id: staff_id,

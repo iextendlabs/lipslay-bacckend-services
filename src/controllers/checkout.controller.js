@@ -36,7 +36,7 @@ const createOrder = async (req, res) => {
     input.customer_email = input.email;
     input.driver_status = "Pending";
 
-    const [groupedBookingOption, groupedBooking] =
+    const [formattedBookings, groupedBookingOption, groupedBooking] =
       await formattingBookingData(bookingData);
 
     const order_ids = [];

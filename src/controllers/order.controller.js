@@ -85,9 +85,8 @@ const orderTotal = async (req, res) => {
     const staffZone = await StaffZone.findByPk(input.zone_id);
     const currentDate = new Date();
 
-    const [groupedBookingOption, groupedBooking] = await formattingBookingData(
-      bookingData
-    );
+    const [formattedBookings, groupedBookingOption, groupedBooking] =
+      await formattingBookingData(bookingData);
 
     let allServiceIds = [];
     for (const key in groupedBooking) {
@@ -129,11 +128,10 @@ const orderTotal = async (req, res) => {
 
     for (const key in groupedBooking) {
       const singleBookingService = groupedBooking[key];
+      const [date, service_staff_id, time_slot_id] = key.split("_");
 
-      // Fetch staff by Staff model and include User
-      const staffId = Array.isArray(singleBookingService) ? singleBookingService[0] : singleBookingService;
       const staff = await Staff.findOne({
-        where: { id: staffId },
+        where: { id: service_staff_id },
         include: [{ model: User }],
       });
       const selected_services = await Service.findAll({
@@ -357,7 +355,8 @@ const updateOrdersToPendingCOD = async (req, res) => {
       // Check if order date is current date
       const orderDate = order.date ? new Date(order.date) : null;
       const today = new Date();
-      const isToday = orderDate &&
+      const isToday =
+        orderDate &&
         orderDate.getDate() === today.getDate() &&
         orderDate.getMonth() === today.getMonth() &&
         orderDate.getFullYear() === today.getFullYear();
