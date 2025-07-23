@@ -289,6 +289,9 @@ const getServiceBySlug = async (slug, zone_id) => {
   const result = {
     id: service.id,
     name: service.name,
+    meta_title: service.meta_title,
+    meta_description: service.meta_description,
+    meta_keywords: service.meta_keywords,
     quote: service.quote ? true : false,
     price: await formatCurrency(service.price ?? 0, zone_id, true),
     discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,

@@ -40,6 +40,9 @@ const formatCategory = async (category) => {
   return {
     id: category.id,
     title: category.title,
+    meta_title: category.meta_title,
+    meta_description: category.meta_description,
+    meta_keywords: category.meta_keywords,
     description: category.description,
     image: imageUrl,
     services: category?.services && category.services.map((service) => ({
@@ -71,6 +74,9 @@ const formatService = (service) => {
   return {
     id: service.id,
     name: service.name,
+    meta_title: service.meta_title,
+    meta_description: service.meta_description,
+    meta_keywords: service.meta_keywords,
     quote: service.quote,
     price: service.price,
     discount: service.discount,
