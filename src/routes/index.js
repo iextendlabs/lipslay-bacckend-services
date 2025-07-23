@@ -34,6 +34,7 @@ const bidController = require("../controllers/bid.controller");
 const bookingByGroupController = require("../controllers/bookingbygroup.controller");
 const { getLayoutData } = require("../controllers/layoutData.controller");
 const cache = require('../utils/cache');
+const cacheController = require('../controllers/cache.controller');
 // TODO forget password endpoint
 const reviewUpload = createUpload({
   getPath: (file) => {
@@ -153,9 +154,6 @@ router.post("/booking/slots-by-group", bookingByGroupController.getBookingSlotsB
 router.get("/layout-data", getLayoutData);
 router.get('/user-coupons', couponController.getUserCoupons);
 router.post('/apply-coupon', couponController.applyCoupon);
-router.post('/clearcache', (req, res) => {
-  cache.clear();
-  res.json({ message: 'Cache cleared successfully.' });
-});
+router.post('/clearcache', cacheController.clearCache);
 module.exports = router;
 // TODO reviews average rating store in service and staff
