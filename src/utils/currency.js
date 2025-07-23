@@ -3,15 +3,26 @@ const { StaffZone, Currency } = require("../models");
 const cache = require("./cache");
 
 async function getZoneData(zoneId) {
+
     const cacheKey = `staffZone:${zoneId}`;
     let staffZone = await cache.get(cacheKey);
     if (staffZone) return staffZone;
+    let result = null;
     staffZone = await StaffZone.findOne({
         where: { id: zoneId },
         include: [{ model: Currency, as: 'currency' }]
     });
-    if (staffZone) await cache.set(cacheKey, staffZone);
-    return staffZone;
+    if (staffZone) {
+        result = {
+            extra_charges: staffZone.extra_charges,
+            currency: staffZone.currency ? {
+                symbol: staffZone.currency.symbol,
+                rate: staffZone.currency.rate
+            } : null
+        };
+    }
+    await cache.set(cacheKey, result);
+    return result;
 }
 
 // helpers/currency.js
