@@ -67,6 +67,9 @@ const getCategoryBySlug = async (slug, zone_id) => {
 
   const result = {
     title: category.title,
+    meta_title: category.meta_title,
+    meta_description: category.meta_description,
+    meta_keywords: category.meta_keywords,
     description: trimWords(category.description, textLimits.categoryDescriptionWords),
     image: category.image,
     services: formattedServices,
