@@ -7,7 +7,9 @@
     "start": "node src/app.js",
     "dev": "nodemon --inspect src/app.js",
     "test": "jest",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "poststart": "curl --location --request POST 'https://api.lipslay.com/api/clearcache' || true",
+    "postbuild": "curl --location --request POST 'https://api.lipslay.com/api/clearcache' || true"
   },
   "keywords": [
     "express",
