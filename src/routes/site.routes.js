@@ -1,0 +1,30 @@
+const express = require("express");
+const router = express.Router();
+const cacheHeader = require("../middleware/cacheHeader");
+const { getHomeData } = require("../controllers/home.controller");
+const { searchServices } = require("../controllers/search.controller");
+const { getServiceBySlug } = require("../controllers/service.controller");
+const { getCategoryBySlug, listMainCategories } = require("../controllers/category.controller");
+const { getInfo } = require("../controllers/info.controller");
+const { listFaqs } = require("../controllers/faq.controller");
+const { getStaffDetail, getAllStaff } = require("../controllers/staff.controller");
+const holidayController = require("../controllers/holiday.controller");
+const zoneController = require("../controllers/zone.controller");
+const { getLayoutData } = require("../controllers/layoutData.controller");
+const cacheController = require('../controllers/cache.controller');
+
+router.get("/home", getHomeData);
+router.get("/search", searchServices);
+router.get("/service", getServiceBySlug);
+router.get("/category", getCategoryBySlug);
+router.get("/categories", cacheHeader, listMainCategories);
+router.get("/info", getInfo);
+router.get("/faqs", listFaqs);
+router.get("/staff", getStaffDetail);
+router.get("/staff/all", getAllStaff);
+router.get("/holidays", holidayController.listHolidayDates);
+router.get("/zones", zoneController.listZones);
+router.get("/layout-data", getLayoutData);
+router.post('/clearcache', cacheController.clearCache);
+
+module.exports = router;
