@@ -45,6 +45,8 @@ const StaffYoutubeVideo = require("./StaffYoutubeVideo");
 const Currency = require("./Currency");
 const Role = require("./Role");
 const OrderChat = require("./OrderChat");
+const Notification = require("./Notification");
+const OrderHistory = require("./OrderHistory");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -381,5 +383,7 @@ module.exports = {
   Currency,
   Role,
   OrderChat,
-  StaffToZone
+  StaffToZone,
+  Notification,
+  OrderHistory,
 };
