@@ -251,9 +251,29 @@ const getOrders = async (req, res) => {
   }
 };
 
+const deviceRegister = async (req, res) => {
+  try {
+    const { user_id, device_token } = req.body;
+    if (!user_id || !device_token) {
+      return res.status(400).json({ message: "user_id and device_token are required." });
+    }
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    user.device_token = device_token;
+    await user.save();
+    return res.json({ message: "Device token updated successfully." });
+  } catch (error) {
+    console.error("Device register error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   login,
   getDriverNotifications,
   orderDriverStatusUpdate,
   getOrders,
+  deviceRegister,
 };

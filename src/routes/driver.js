@@ -9,6 +9,8 @@ router.get("/notifications", driverLoginController.getDriverNotifications);
 router.get("/order/:order_id/chats", orderChatController.getOrderChats);
 router.post("/order/:order_id/chats", orderChatController.createOrderChat);
 router.get("/orders", driverLoginController.getOrders);
+
+router.post("/device/register", driverLoginController.deviceRegister);
 router.post(
   "/order/driver-status",
   driverLoginController.orderDriverStatusUpdate
