@@ -48,7 +48,7 @@ const getOrderChats = async (req, res) => {
         text: chat.text,
         created_at: chat.created_at,
         user: userType,
-        type: chat.type
+        location: chat.type == "Location" ? true : false,
       };
     });
     res.json(mappedChats);
