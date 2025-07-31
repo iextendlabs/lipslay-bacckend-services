@@ -191,7 +191,7 @@ const getOrders = async (req, res) => {
       : [];
 
     const driver_id = user_id;
-    const currentDate = new Date().toISOString().slice(0, 10);
+    const currentDate = new Date().toLocaleDateString('en-CA'); // "YYYY-MM-DD" format
 
     // Get driver order limit from env or default
     const driverOrderLimit = parseInt(process.env.DRIVER_ORDER_LIMIT) || 20;
@@ -244,6 +244,7 @@ const getOrders = async (req, res) => {
     return res.json({
       orders: mappedOrders,
       notification: true,
+      date: currentDate
     });
   } catch (error) {
     console.error("getDriverOrders error:", error);
