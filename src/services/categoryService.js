@@ -86,10 +86,20 @@ const listMainCategories = async () => {
   if (cached) return cached;
 
   const categories = await ServiceCategory.findAll({
-    where: { parent_id: null, status: 1 }
+    where: { parent_id: null, status: 1 },
+    include: [{
+      model: ServiceCategory,
+      as: 'childCategories',
+      where: { status: 1 },
+      required: false
+    }]
   });
 
-  const formatted = await Promise.all(categories.map(cat => formatCategory(cat)));
+  const formatted = await Promise.all(categories.map(cat => {
+    // Move childCategories to subcategories for formatCategory
+    const catObj = { ...cat.toJSON(), subcategories: cat.childCategories };
+    return formatCategory(catObj);
+  }));
   cache.set(cacheKey, formatted);
   return formatted;
 };
