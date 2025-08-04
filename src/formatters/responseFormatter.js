@@ -29,12 +29,16 @@ const formatCategory = async (category) => {
   // Resize category image to 318x192 webp in categories folder
   const originalUrl = buildUrl(urls.categoryImages, category.image);
   const resizeDir = process.env.RESIZE_IMAGE_PATH;
-  const categoryFolder = path.join(resizeDir, 'categories');
-  const webpFilename = `${path.parse(category.image).name}_318x192.webp`;
-  let imageUrl = `${urls.baseUrl}/resize-images/categories/${webpFilename}`;
-  const processedPath = await getOrCreateWebpImage(originalUrl, categoryFolder, webpFilename, 318, 192);
-  if (!processedPath) {
-    imageUrl = originalUrl;
+  let imageUrl = originalUrl;
+
+  if (category.image) {
+    const categoryFolder = path.join(resizeDir, 'categories');
+    const webpFilename = `${path.parse(category.image).name}_318x192.webp`;
+    imageUrl = `${urls.baseUrl}/resize-images/categories/${webpFilename}`;
+    const processedPath = await getOrCreateWebpImage(originalUrl, categoryFolder, webpFilename, 318, 192);
+    if (!processedPath) {
+      imageUrl = originalUrl;
+    }
   }
 
   return {
@@ -122,12 +126,16 @@ const formatService = (service) => {
 const formatServiceCard = async (service) => {
   const originalUrl = buildUrl(urls.serviceImages, service.image);
   const resizeDir = process.env.RESIZE_IMAGE_PATH;
-  const serviceFolder = path.join(resizeDir, 'services');
-  const webpFilename = `${path.parse(service.image).name}_627x192.webp`;
-  let imageUrl = `${urls.baseUrl}/resize-images/services/${webpFilename}`;
-  const processedPath = await getOrCreateWebpImage(originalUrl, serviceFolder, webpFilename, 627, 192);
-  if (!processedPath) {
-    imageUrl = originalUrl;
+  let imageUrl = originalUrl;
+
+  if (service.image) {
+    const serviceFolder = path.join(resizeDir, 'services');
+    const webpFilename = `${path.parse(service.image).name}_627x192.webp`;
+    imageUrl = `${urls.baseUrl}/resize-images/services/${webpFilename}`;
+    const processedPath = await getOrCreateWebpImage(originalUrl, serviceFolder, webpFilename, 627, 192);
+    if (!processedPath) {
+      imageUrl = originalUrl;
+    }
   }
 
   return {
