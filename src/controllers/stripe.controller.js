@@ -1,5 +1,10 @@
 const Stripe = require("stripe");
-const { User, Order } = require("../models");
+const { User, Order, OrderTotal, OrderService } = require("../models");
+const { getOrderDetailsHtml } = require("../utils/mailTemplate/orderEmailHtml");
+const { sendEmail } = require("../utils/emailSender");
+const {
+  getAdminOrderHtml,
+} = require("../utils/mailTemplate/adminOrderEmailHtml");
 const stripe = Stripe(process.env.STRIPE_SECRET);
 
 // POST /stripe/payment-intent
@@ -86,7 +91,8 @@ exports.stripePayment = async (req, res) => {
       for (const order of updatedOrders) {
         const orderDate = order.date ? new Date(order.date) : null;
         const today = new Date();
-        const isToday = orderDate &&
+        const isToday =
+          orderDate &&
           orderDate.getDate() === today.getDate() &&
           orderDate.getMonth() === today.getMonth() &&
           orderDate.getFullYear() === today.getFullYear();
@@ -116,6 +122,39 @@ exports.stripePayment = async (req, res) => {
               );
             }
           }
+        }
+        try {
+          if (order.customer_email) {
+            const orderServices = await OrderService.findAll({
+              where: { order_id: order.id },
+            });
+            const orderTotal = await OrderTotal.findOne({
+              where: { order_id: order.id },
+            });
+            const orderData = {
+              ...(order.toJSON ? order.toJSON() : order),
+              orderServices,
+              orderTotal,
+            };
+            await sendEmail({
+              from: process.env.EMAIL_FROM,
+              to: order.customer_email,
+              subject: `Order #${order.id} Created `,
+              html: getOrderDetailsHtml(orderData),
+            });
+            // Send to Admin
+            await sendEmail({
+              from: order.customer_email,
+              to: process.env.EMAIL_FROM,
+              subject: `New Order #${order.id} Created `,
+              html: getAdminOrderHtml(orderData),
+            });
+          }
+        } catch (emailErr) {
+          console.error(
+            `Failed to send email for order #${order.id}:`,
+            emailErr
+          );
         }
       }
     }

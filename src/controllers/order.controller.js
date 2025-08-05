@@ -14,9 +14,13 @@ const {
   Coupon,
   ServiceCategory,
   Currency,
+  OrderTotal,
 } = require("../models");
 const { Op } = require("sequelize");
 const { formatCurrency } = require("../utils/currency");
+const { sendEmail } = require("../utils/emailSender");
+const { getAdminOrderHtml } = require("../utils/mailTemplate/adminOrderEmailHtml");
+const { getOrderDetailsHtml } = require("../utils/mailTemplate/orderEmailHtml");
 // List orders for the authenticated user
 const listOrders = async (req, res) => {
   try {
@@ -386,6 +390,38 @@ const updateOrdersToPendingCOD = async (req, res) => {
             );
           }
         }
+      }
+
+      // Email sending
+      try {
+        if (order.customer_email) {
+          const orderServices = await OrderService.findAll({
+            where: { order_id: order.id },
+          });
+          const orderTotal = await OrderTotal.findOne({
+            where: { order_id: order.id }
+          });
+          const orderData = {
+            ...order.toJSON ? order.toJSON() : order,
+            orderServices,
+            orderTotal
+          };
+          await sendEmail({
+            from: process.env.EMAIL_FROM,
+            to: order.customer_email,
+            subject: `Order #${order.id} Created`,
+            html: getOrderDetailsHtml(orderData),
+          });
+          // Send to Admin
+          await sendEmail({
+            from: order.customer_email,
+            to: process.env.EMAIL_FROM,
+            subject: `New Order #${order.id} Created`,
+            html: getAdminOrderHtml(orderData),
+          });
+        }
+      } catch (emailErr) {
+        console.error(`Failed to send email for order #${order.id}:`, emailErr);
       }
     }
 
