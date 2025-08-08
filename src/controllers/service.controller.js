@@ -33,7 +33,19 @@ const getServiceBySlug = async (req, res) => {
     }
     fileName += '.json';
     const filePath = path.join(absDirPath, fileName);
+
     fs.writeFileSync(filePath, JSON.stringify(formattedService, null, 2), 'utf8');
+    // Log to a file instead of console for live site
+    const logDir = process.env.JSON_CACHE_LOG_PATH || 'src/jsonCache/logs';
+    const absLogDir = path.isAbsolute(logDir) ? logDir : path.join(__dirname, '../../', logDir);
+    if (!fs.existsSync(absLogDir)) {
+      fs.mkdirSync(absLogDir, { recursive: true });
+    }
+    const logFile = path.join(absLogDir, 'service_cache.log');
+    const logMsg = fs.existsSync(filePath)
+      ? `[${new Date().toISOString()}] Service JSON cache created: ${filePath}\n`
+      : `[${new Date().toISOString()}] Failed to create service JSON cache: ${filePath}\n`;
+    fs.appendFileSync(logFile, logMsg, 'utf8');
 
     res.json(formattedService);
   } catch (error) {
