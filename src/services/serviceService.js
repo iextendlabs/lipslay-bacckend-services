@@ -28,10 +28,10 @@ const trimWords = (text, maxWords = 100) => {
 };
 
 const getServiceBySlug = async (slug, zone_id) => {
-  // --- Caching ---
-  const cacheKey = `service_${slug}_${zone_id}`;
-  const cached = cache.get(cacheKey);
-  if (cached) return cached;
+  // // --- Caching ---
+  // const cacheKey = `service_${slug}_${zone_id}`;
+  // const cached = cache.get(cacheKey);
+  // if (cached) return cached;
 
   // --- Fetch Main Service ---
   const service = await Service.findOne({
@@ -317,7 +317,7 @@ const getServiceBySlug = async (slug, zone_id) => {
     addOns,
     packages,
   };
-  cache.set(cacheKey, result);
+  // cache.set(cacheKey, result);
   return result;
 };
 

@@ -135,3 +135,6 @@ package-lock.json
 config/firebase-service-account.json
 src/images
 package-lock.json
+
+# jsonCache
+/src/jsonCache

@@ -1,5 +1,8 @@
+const fs = require('fs');
+const path = require('path');
 const serviceService = require('../services/serviceService');
 const responseFormatter = require('../formatters/responseFormatter');
+require('dotenv').config();
 
 const getServiceBySlug = async (req, res) => {
   try {
@@ -15,7 +18,24 @@ const getServiceBySlug = async (req, res) => {
       return res.status(404).json({ error: 'Service not found.' });
     }
 
-    res.json(responseFormatter.formatService(service));
+    const formattedService = responseFormatter.formatService(service);
+
+    const dirPath = process.env.JSON_CACHE_SERVICE_PATH || 'src/jsonCache/services';
+    const absDirPath = path.isAbsolute(dirPath) ? dirPath : path.join(__dirname, '../../', dirPath);
+    if (!fs.existsSync(absDirPath)) {
+      fs.mkdirSync(absDirPath, { recursive: true });
+    }
+
+    // Build filename as slug or slug_zoneid.json if zone_id is present
+    let fileName = slug;
+    if (zone_id) {
+      fileName += `_${zone_id}`;
+    }
+    fileName += '.json';
+    const filePath = path.join(absDirPath, fileName);
+    fs.writeFileSync(filePath, JSON.stringify(formattedService, null, 2), 'utf8');
+
+    res.json(formattedService);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
