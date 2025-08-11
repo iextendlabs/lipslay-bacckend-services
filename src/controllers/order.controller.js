@@ -15,6 +15,7 @@ const {
   ServiceCategory,
   Currency,
   OrderTotal,
+  Setting,
 } = require("../models");
 const { Op } = require("sequelize");
 const { formatCurrency } = require("../utils/currency");
@@ -406,6 +407,20 @@ const updateOrdersToPendingCOD = async (req, res) => {
             orderServices,
             orderTotal
           };
+          if(isToday){
+            const dailyAlertSetting = await Setting.findOne({ where: { key: "Emails For Daily Alert" } });
+            if (dailyAlertSetting && dailyAlertSetting.value) {
+              const alertEmails = dailyAlertSetting.value.split(",").map(e => e.trim()).filter(Boolean);
+              for (const email of alertEmails) {
+                await sendEmail({
+                  from: order.customer_email,
+                  to: email,
+                  subject: `New Order #${order.id} Created`,
+                  html: getAdminOrderHtml(orderData),
+                });
+              }
+            }
+          }
           await sendEmail({
             from: process.env.EMAIL_FROM,
             to: order.customer_email,
