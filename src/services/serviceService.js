@@ -297,8 +297,8 @@ const getServiceBySlug = async (slug, zone_id) => {
     discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
     duration: service.duration,
     rating: avgRating ? Number(avgRating) : null,
-    description: trimWords(striptags(service.short_description), 100),
-    longDescription: trimWords((service.description || '').replace(/https:\/\/lipslay\.com/g, 'https://partner.lipslay.com'), 100),
+    description: striptags(service.short_description),
+    longDescription: (service.description || '').replace(/https:\/\/lipslay\.com/g, 'https://partner.lipslay.com'),
     image: service.image,
     gallery,
     faqs: faqs.map((f) => ({
