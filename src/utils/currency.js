@@ -1,4 +1,3 @@
-
 const { StaffZone, Currency } = require("../models");
 const cache = require("./cache");
 
@@ -34,7 +33,10 @@ async function formatCurrency(amount, zoneId = null, extraCharges = false) {
         if (zoneId) {
             const staffZone = await getZoneData(zoneId);
             if (staffZone) {
-                const charges = extraCharges && staffZone.extra_charges ? parseFloat(staffZone.extra_charges) : 0;
+                let charges = 0;
+                if (modifiedAmount > 0 && extraCharges && staffZone.extra_charges) {
+                    charges = parseFloat(staffZone.extra_charges);
+                }
                 if (staffZone.currency) {
                     symbol = staffZone.currency.symbol;
                     const currencyRate = parseFloat(staffZone.currency.rate);
