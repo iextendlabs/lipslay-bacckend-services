@@ -17,6 +17,7 @@ const cache = require("../utils/cache");
 const { Op } = require("sequelize");
 const striptags = require("striptags");
 const { formatCurrency } = require("../utils/currency");
+const urls = require("../config/urls");
 
 // Utility to trim text
 const trimWords = (text, maxWords = 100) => {
@@ -123,6 +124,7 @@ const getServiceBySlug = async (slug, zone_id) => {
       attributes: [
         "id",
         "option_name",
+        "description",
         "option_price",
         "option_duration",
         "image",
@@ -143,6 +145,7 @@ const getServiceBySlug = async (slug, zone_id) => {
          attributes: [
            "id",
            "option_name",
+           "description",
            "option_price",
            "option_duration",
            "image",
@@ -281,9 +284,10 @@ const getServiceBySlug = async (slug, zone_id) => {
   const formattedOptions = await Promise.all((options || []).map(async (opt) => ({
     id: opt.id,
     option_name: opt.option_name,
+    option_description: opt.description,
     option_price: await formatCurrency(opt.option_price ?? 0, zone_id, false),
     option_duration: opt.option_duration,
-    image: opt.image,
+    image: opt.image ? `${urls.baseUrl}${urls.serviceOptionImages}${opt.image}` : null,
   })));
 
   const result = {

@@ -5,6 +5,7 @@ const ServiceOption = sequelize.define('ServiceOption', {
   id: { type: DataTypes.BIGINT.UNSIGNED, primaryKey: true, autoIncrement: true },
   service_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
   option_name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.STRING, allowNull: true },
   option_price: { type: DataTypes.STRING, allowNull: false },
   created_at: { type: DataTypes.DATE, allowNull: true },
   updated_at: { type: DataTypes.DATE, allowNull: true },
