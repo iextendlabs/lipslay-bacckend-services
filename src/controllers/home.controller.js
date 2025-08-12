@@ -109,6 +109,7 @@ const getHomeData = async (req, res) => {
 
     const assignedStaff = await Staff.findAll({
       where: { status: 1, feature: 1 },
+      order: [["sort", "ASC"]],
       include: [
         {
           model: User,

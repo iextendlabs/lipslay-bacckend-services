@@ -2,20 +2,20 @@ const textLimits = require("../config/textLimits");
 const urls = require("../config/urls");
 const {
   Staff,
-  Service,
-  ServiceCategory,
   Review,
   SubTitle,
   Setting,
   Order,
-  StaffImage, // Added
-  StaffYoutubeVideo, // Added
+  TimeSlot,
+  TimeSlotToStaff,
 } = require("../models");
 const stripHtmlTags = require("../utils/stripHtmlTags");
 const { trimWords } = require("../utils/trimWords");
 const { formatCurrency } = require("../utils/currency");
 const cache = require("../utils/cache");
 const { formatServiceCard, formatCategory, formatStaffCard } = require("../formatters/responseFormatter");
+const moment = require("moment");
+const { Op } = require("sequelize");
 
 /**
  * GET /staff?staff=slug_or_id
@@ -30,8 +30,12 @@ const getStaffDetail = async (req, res) => {
     }
 
     const cacheKey = `staff_detail_${staff}_${zone_id}`;
-    const cached = cache.get(cacheKey);
-    if (cached) return res.json(cached);
+    let cached = cache.get(cacheKey);
+
+    if (cached) {
+      cached.available_time_slots = await getAvailableTimeSlots(cached.user_id);
+      return res.json(cached);
+    }
 
     let showSocialLinks = true;
     const socialLinksSetting = await Setting.findOne({
@@ -41,7 +45,6 @@ const getStaffDetail = async (req, res) => {
       showSocialLinks = false;
     }
 
-    // Fetch staff basic info
     const staffObj = await Staff.findOne({
       where: isNaN(staff) ? { slug: staff } : { id: staff }
     });
@@ -49,7 +52,6 @@ const getStaffDetail = async (req, res) => {
       return res.status(404).json({ error: "Staff not found" });
     }
 
-    // Fetch related models separately
     const [
       services,
       categories,
@@ -67,10 +69,6 @@ const getStaffDetail = async (req, res) => {
       staffObj.getImages(),
       staffObj.getYoutubeVideos()
     ]);
-
-    if (!staffObj) {
-      return res.status(404).json({ error: "Staff not found" });
-    }
 
     const orderCount = await Order.count({
       where: { service_staff_id: staffObj.user_id },
@@ -102,7 +100,7 @@ const getStaffDetail = async (req, res) => {
           description: trimWords(stripHtmlTags(s.description), textLimits.serviceDescriptionWords),
           duration: s.duration,
           slug: s.slug,
-          hasOptionsOrQuote: !!s.quote // or add logic for options if needed
+          hasOptionsOrQuote: !!s.quote
         };
         return formatServiceCard(serviceObj);
       })
@@ -117,6 +115,7 @@ const getStaffDetail = async (req, res) => {
     const formattedImages = (images || [])
       .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : `${urls.baseUrl}/default.png`))
       .filter(Boolean);
+
     const formattedYoutubeVideos = (youtubeVideos || [])
       .map((v) => v.youtube_video)
       .filter(Boolean);
@@ -126,6 +125,8 @@ const getStaffDetail = async (req, res) => {
       staff_id: staffObj.id,
       user_id: staffObj.user_id,
       location: staffObj.location,
+      nationality: staffObj.nationality,
+      min_order_value: staffObj.min_order_value,
       image: staffObj.image ? `${urls.baseUrl}${urls.staffImages}${staffObj.image}` : `${urls.baseUrl}/default.png`,
       charges: staffObj.charges,
       status: staffObj.status,
@@ -136,25 +137,27 @@ const getStaffDetail = async (req, res) => {
       tiktok: showSocialLinks ? staffObj.tiktok : null,
       about: staffObj.about,
       sub_title: subTitleStr,
-      min_order_value: staffObj.min_order_value,
       online: staffObj.online,
       get_quote: staffObj.get_quote,
       name: user ? user.name : null,
       slug: staffObj.slug,
       description: staffObj.description,
-      order_count: orderCount,
+      order_count: staffObj.delivered_order != null
+        ? staffObj.delivered_order + orderCount
+        : orderCount,
       services: formattedServices,
       categories: formattedCategories,
       reviews: reviews || [],
       images: formattedImages,
       youtube_videos: formattedYoutubeVideos,
     };
+
     cache.set(cacheKey, output);
 
-    // Map reviews to only return dataValues if present
     if (output.reviews && Array.isArray(output.reviews)) {
       output.reviews = output.reviews.map(r => r.dataValues ? r.dataValues : r);
     }
+    output.available_time_slots = await getAvailableTimeSlots(staffObj.user_id);
 
     res.json(output);
   } catch (err) {
@@ -164,6 +167,39 @@ const getStaffDetail = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+async function getAvailableTimeSlots(userId) {
+  const currentDate = moment().format("YYYY-MM-DD");
+  const twoHoursLater = moment().add(2, "hours").format("HH:mm:ss");
+
+  const slotStaffRelations = await TimeSlotToStaff.findAll({
+    where: { staff_id: userId },
+    attributes: ["time_slot_id"],
+    group: ["time_slot_id"],
+  });
+
+  const todayOrders = await Order.findAll({
+    where: { service_staff_id: userId, date: currentDate },
+    attributes: ["time_slot_id"]
+  });
+
+  const orderedTimeSlotIds = todayOrders.map((order) => order.time_slot_id);
+  const availableTimeSlotIds = slotStaffRelations
+    .map((x) => x.time_slot_id)
+    .filter((id) => !orderedTimeSlotIds.includes(id));
+
+  if (!availableTimeSlotIds.length) return [];
+
+  return await TimeSlot.findAll({
+    where: {
+      status: 1,
+      id: { [Op.in]: availableTimeSlotIds },
+      time_start: { [Op.gte]: twoHoursLater },
+    },
+    order: [["time_start", "ASC"]],
+  });
+}
+
 
 const getAllStaff = async (req, res) => {
   try {

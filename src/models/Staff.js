@@ -30,7 +30,9 @@ const Staff = sequelize.define('Staff', {
   get_quote: DataTypes.TINYINT,
   quote_amount: DataTypes.DECIMAL(10,2),
   quote_commission: DataTypes.DECIMAL(10,2),
-  show_quote_detail: DataTypes.TINYINT
+  show_quote_detail: DataTypes.TINYINT,
+  delivered_order: DataTypes.INTEGER,
+  sort: DataTypes.INTEGER
 }, {
   tableName: 'staff',
   timestamps: false
