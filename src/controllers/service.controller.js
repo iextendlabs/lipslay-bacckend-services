@@ -18,7 +18,7 @@ const getServiceBySlug = async (req, res) => {
       return res.status(404).json({ error: 'Service not found.' });
     }
 
-    const formattedService = responseFormatter.formatService(service);
+    const formattedService = await responseFormatter.formatService(service);
 
     const dirPath = process.env.JSON_CACHE_SERVICE_PATH || 'src/jsonCache/services';
     const absDirPath = path.isAbsolute(dirPath) ? dirPath : path.join(__dirname, '../../', dirPath);

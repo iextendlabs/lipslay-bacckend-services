@@ -74,7 +74,39 @@ const formatCategory = async (category) => {
 };
 
 
-const formatService = (service) => {
+const formatService = async (service) => {
+  const resizeDir = process.env.RESIZE_IMAGE_PATH;
+  const galleryFolder = path.join(resizeDir, 'services', 'additional');
+
+  // Process gallery images with checks
+  const gallery = Array.isArray(service.gallery)
+    ? await Promise.all(
+        service.gallery.map(async (img) => {
+          if (!img || typeof img !== 'string') return null;
+          try {
+            const webpFilename = `${path.parse(img).name}_1080x1080.webp`;
+            const originalUrl = buildUrl(urls.serviceGallery, img);
+            const processedPath = await getOrCreateWebpImage(
+              originalUrl,
+              galleryFolder,
+              webpFilename,
+              1080,
+              1080
+            );
+            // If processing failed, fallback to original image URL
+            if (!processedPath || typeof processedPath !== 'string' || processedPath.endsWith('/default.png')) {
+              return buildUrl(urls.serviceGallery, img);
+            }
+            // Return the public URL for the processed image
+            return `${urls.baseUrl}/resize-images/services/additional/${webpFilename}`;
+          } catch (err) {
+            // On error, fallback to original image URL
+            return buildUrl(urls.serviceGallery, img);
+          }
+        })
+      )
+    : [];
+
   return {
     id: service.id,
     name: service.name,
@@ -89,7 +121,7 @@ const formatService = (service) => {
     description: service.description,
     longDescription: service.longDescription,
     image: buildUrl(urls.serviceImages, service.image),
-    gallery: service.gallery.map((img) => buildUrl(urls.serviceGallery, img)),
+    gallery,
     faqs: service.faqs,
     reviews: service.reviews,
     staffMembers: service.staffMembers.map((staff) => ({
