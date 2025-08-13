@@ -16,6 +16,8 @@ const cache = require("../utils/cache");
 const { formatServiceCard, formatCategory, formatStaffCard } = require("../formatters/responseFormatter");
 const moment = require("moment");
 const { Op } = require("sequelize");
+const { resizeStaffImageToWebp } = require("../utils/resizeStaffImageToWebp");
+const { buildUrl } = require("../utils/urlBuilder");
 
 /**
  * GET /staff?staff=slug_or_id
@@ -112,9 +114,19 @@ const getStaffDetail = async (req, res) => {
       })
     );
 
-    const formattedImages = (images || [])
-      .map((img) => (img.image ? `${urls.baseUrl}${urls.staffImages}${img.image}` : `${urls.baseUrl}/default.png`))
-      .filter(Boolean);
+
+    const formattedImages = await Promise.all(
+      (images || [])
+        .map(async (img) => {
+          if (img.image) {
+            const webpUrl = await resizeStaffImageToWebp(buildUrl(urls.staffImages, img.image), img.image);
+            return webpUrl ? webpUrl : null;
+          }
+          return null;
+        })
+    );
+    
+    const filteredImages = formattedImages.filter(Boolean);
 
     const formattedYoutubeVideos = (youtubeVideos || [])
       .map((v) => v.youtube_video)
@@ -148,7 +160,7 @@ const getStaffDetail = async (req, res) => {
       services: formattedServices,
       categories: formattedCategories,
       reviews: reviews || [],
-      images: formattedImages,
+      images: filteredImages,
       youtube_videos: formattedYoutubeVideos,
     };
 
@@ -190,14 +202,24 @@ async function getAvailableTimeSlots(userId) {
 
   if (!availableTimeSlotIds.length) return [];
 
-  return await TimeSlot.findAll({
+  const slots = await TimeSlot.findAll({
     where: {
       status: 1,
       id: { [Op.in]: availableTimeSlotIds },
       time_start: { [Op.gte]: twoHoursLater },
     },
     order: [["time_start", "ASC"]],
+    attributes: ["id", "name", "type", "date", "time_start"]
   });
+
+  // Format time_start to AM/PM
+  return slots.map(slot => ({
+    id: slot.id,
+    name: slot.name,
+    type: slot.type,
+    date: slot.date,
+    time_start: moment(slot.time_start, "HH:mm:ss").format("hh:mm A")
+  }));
 }
 
 
