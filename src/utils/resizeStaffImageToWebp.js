@@ -25,8 +25,8 @@ async function resizeStaffImageToWebp(originalUrl, imageName) {
     if (!response.ok) throw new Error('Image download failed');
     const buffer = await response.arrayBuffer();
     await sharp(Buffer.from(buffer))
-      .resize(1080, 1080, { fit: 'cover' })
-      .rotate() // disables EXIF orientation
+      await sharp(Buffer.from(buffer))
+      .resize(1080, 1080, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
       .webp({ quality: 80 })
       .toFile(outputPath);
     return webUrl;
