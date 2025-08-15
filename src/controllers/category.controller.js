@@ -45,4 +45,14 @@ const listMainCategories = async (req, res) => {
   }
 };
 
-module.exports = { getCategoryBySlug, listMainCategories };
+const listAllCategories = async (req, res) => {
+  try {
+    const categories = await categoryService.listAllCategories();
+    res.json(categories);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+module.exports = { getCategoryBySlug, listMainCategories, listAllCategories };

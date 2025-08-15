@@ -9,8 +9,13 @@ const { formatServiceCard } = require('../formatters/responseFormatter');
 const searchServices = async (req, res) => {
   try {
     const zone_id = req.query.zoneId ?? null;
-    const q = req.query.q;
+    const q = req.query.q || "";
     const id = req.query.id;
+
+    const category = req.query.category || "";
+    const minPrice = parseFloat(req.query.min_price) || 0;
+    const maxPrice = parseFloat(req.query.max_price) || 1000000; // large max
+    const sort = req.query.sort || "";
 
     if (id) {
       const service = await Service.findOne({
@@ -25,6 +30,9 @@ const searchServices = async (req, res) => {
           through: { attributes: [] }
         }]
       });
+
+      if (!service) return res.json({ services: [] });
+
       let options = [];
       if (service) {
         options = await ServiceOption.findAll({
@@ -38,52 +46,78 @@ const searchServices = async (req, res) => {
         attributes: ["user_name", "rating", "created_at", "content", "video"],
       });
 
-      let avgRating = 0;
-      if (reviews.length > 0) {
-        const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
-        avgRating = parseFloat((total / reviews.length).toFixed(2));
-      }
+      const avgRating = reviews.length > 0
+        ? parseFloat((reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(2))
+        : 0;
 
       const hasOptionsOrQuote = !!(service.quote || (options && options.length > 0));
 
-      const serviceObj = service ? {
+      const serviceObj = {
         id: service.id,
         name: service.name,
         price: await formatCurrency(service.price ?? 0, zone_id, true),
-        discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
+        discount: service.discount != null && service.discount > 0
+          ? await formatCurrency(service.discount, zone_id, true)
+          : null,
         duration: service.duration,
         rating: avgRating,
         description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
         image: service.image,
         slug: service.slug,
         hasOptionsOrQuote,
-      } : null;
-      return res.json({ services: serviceObj ? [formatServiceCard(serviceObj)] : [] });
+      };
+
+      return res.json({ services: [formatServiceCard(serviceObj)] });
     }
 
-    if (!q || q.trim() === '') {
+    if (!q.trim() && !category && minPrice === 0 && maxPrice >= 1000000) {
       return res.json({ services: [] });
     }
 
-    // Prioritize name matches, then description, then keywords
-    const services = await Service.findAll({
-      where: {
-        status: 1,
-        [Op.or]: [
-          { name: { [Op.like]: `%${q}%` } },
-          { description: { [Op.like]: `%${q}%` } },
-          { meta_keywords: { [Op.like]: `%${q}%` } }
-        ]
-      },
-      limit: 20,
-      order: [
+    const whereConditions = {
+      status: 1,
+      price: { [Op.between]: [minPrice, maxPrice] }
+    };
+
+    if (q.trim()) {
+      whereConditions[Op.or] = [
+        { name: { [Op.like]: `%${q}%` } },
+        { description: { [Op.like]: `%${q}%` } },
+        { meta_keywords: { [Op.like]: `%${q}%` } }
+      ];
+    }
+
+    const includeOptions = [];
+    if (category) {
+      includeOptions.push({
+        model: ServiceCategory,
+        as: "ServiceCategories",
+        where: { id: category },
+        through: { attributes: [] }
+      });
+    }
+
+    let order = [];
+    if (sort === "price_asc") order = [["price", "ASC"]];
+    else if (sort === "price_desc") order = [["price", "DESC"]];
+    else if (sort === "name_asc") order = [["name", "ASC"]];
+    else if (sort === "name_desc") order = [["name", "DESC"]];
+    else {
+      order = [
         [literal(`CASE WHEN Service.name LIKE ${Service.sequelize.escape('%' + q + '%')} THEN 1 ELSE 2 END`), 'ASC'],
         [literal(`CASE WHEN Service.description LIKE ${Service.sequelize.escape('%' + q + '%')} THEN 1 ELSE 2 END`), 'ASC'],
         ['id', 'DESC']
-      ]
+      ];
+    }
+
+    const services = await Service.findAll({
+      where: whereConditions,
+      include: includeOptions,
+      order
     });
 
-    const formatted = await Promise.all(services.map(async service => {
+    const formatted = await Promise.all(
+      services.map(async service => {
         const options = await ServiceOption.findAll({
           where: { service_id: service.id },
           attributes: ['id', 'option_name', 'option_price', 'option_duration', 'image']
@@ -93,11 +127,10 @@ const searchServices = async (req, res) => {
           where: { service_id: service.id },
           attributes: ["rating"]
         });
-        let avgRating = null;
-        if (reviews.length > 0) {
-          const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
-          avgRating = parseFloat((total / reviews.length).toFixed(2));
-        }
+
+        const avgRating = reviews.length > 0
+          ? parseFloat((reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(2))
+          : null;
 
         const hasOptionsOrQuote = !!(service.quote || (options && options.length > 0));
 
@@ -105,17 +138,23 @@ const searchServices = async (req, res) => {
           id: service.id,
           name: service.name,
           price: await formatCurrency(service.price ?? 0, zone_id, true),
-          discount: service.discount != null && service.discount > 0 ? await formatCurrency(service.discount, zone_id, true) : null,
+          discount: service.discount != null && service.discount > 0
+            ? await formatCurrency(service.discount, zone_id, true)
+            : null,
           duration: service.duration,
           rating: avgRating,
           description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
           image: service.image,
-          slug:  service.slug,
+          slug: service.slug,
           hasOptionsOrQuote,
         };
+
         return formatServiceCard(serviceObj);
-      }));
+      })
+    );
+
     res.json({ services: formatted });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });

@@ -104,4 +104,17 @@ const listMainCategories = async () => {
   return formatted;
 };
 
-module.exports = { getCategoryBySlug, listMainCategories };
+async function listAllCategories() {
+  const categories = await ServiceCategory.findAll({
+    where: { status: 1 },
+    attributes: ['id', 'title']
+  });
+
+  return categories.map(cat => cat.toJSON());
+}
+
+module.exports = {
+  getCategoryBySlug,
+  listMainCategories,
+  listAllCategories,
+};
