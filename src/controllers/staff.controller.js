@@ -18,6 +18,7 @@ const moment = require("moment");
 const { Op } = require("sequelize");
 const { resizeStaffImageToWebp } = require("../utils/resizeStaffImageToWebp");
 const { buildUrl } = require("../utils/urlBuilder");
+const { writeJsonCache } = require('../helpers/jsonCacheHelper');
 
 /**
  * GET /staff?staff=slug_or_id
@@ -29,14 +30,6 @@ const getStaffDetail = async (req, res) => {
     const { staff } = req.query;
     if (!staff) {
       return res.status(400).json({ error: "Missing staff parameter" });
-    }
-
-    const cacheKey = `staff_detail_${staff}_${zone_id}`;
-    let cached = cache.get(cacheKey);
-
-    if (cached) {
-      cached.available_time_slots = await getAvailableTimeSlots(cached.user_id);
-      return res.json(cached);
     }
 
     let showSocialLinks = true;
@@ -159,17 +152,19 @@ const getStaffDetail = async (req, res) => {
         : orderCount,
       services: formattedServices,
       categories: formattedCategories,
-      reviews: reviews || [],
+      reviews: Array.isArray(reviews)
+        ? reviews.map(r => r.dataValues ? r.dataValues : r)
+        : [],
       images: filteredImages,
       youtube_videos: formattedYoutubeVideos,
     };
 
-    cache.set(cacheKey, output);
-
-    if (output.reviews && Array.isArray(output.reviews)) {
-      output.reviews = output.reviews.map(r => r.dataValues ? r.dataValues : r);
-    }
-    output.available_time_slots = await getAvailableTimeSlots(staffObj.user_id);
+    writeJsonCache({
+      data: output,
+      slug: staffObj.id,
+      zone_id,
+      type: 'staff'
+    });
 
     res.json(output);
   } catch (err) {
@@ -180,47 +175,58 @@ const getStaffDetail = async (req, res) => {
   }
 };
 
-async function getAvailableTimeSlots(userId) {
-  const currentDate = moment().format("YYYY-MM-DD");
-  const twoHoursLater = moment().add(2, "hours").format("HH:mm:ss");
+const staffAvailableSlots = async (req, res) => {
+  try {
+    const staffId = req.query.staffId;
+    if (!staffId) {
+      return res.status(400).json({ error: "Missing staffId parameter" });
+    }
 
-  const slotStaffRelations = await TimeSlotToStaff.findAll({
-    where: { staff_id: userId },
-    attributes: ["time_slot_id"],
-    group: ["time_slot_id"],
-  });
+    const currentDate = moment().format("YYYY-MM-DD");
+    const twoHoursLater = moment().add(2, "hours").format("HH:mm:ss");
 
-  const todayOrders = await Order.findAll({
-    where: { service_staff_id: userId, date: currentDate },
-    attributes: ["time_slot_id"]
-  });
+    const slotStaffRelations = await TimeSlotToStaff.findAll({
+      where: { staff_id: staffId },
+      attributes: ["time_slot_id"],
+      group: ["time_slot_id"],
+    });
 
-  const orderedTimeSlotIds = todayOrders.map((order) => order.time_slot_id);
-  const availableTimeSlotIds = slotStaffRelations
-    .map((x) => x.time_slot_id)
-    .filter((id) => !orderedTimeSlotIds.includes(id));
+    const todayOrders = await Order.findAll({
+      where: { service_staff_id: staffId, date: currentDate },
+      attributes: ["time_slot_id"]
+    });
 
-  if (!availableTimeSlotIds.length) return [];
+    const orderedTimeSlotIds = todayOrders.map((order) => order.time_slot_id);
+    const availableTimeSlotIds = slotStaffRelations
+      .map((x) => x.time_slot_id)
+      .filter((id) => !orderedTimeSlotIds.includes(id));
 
-  const slots = await TimeSlot.findAll({
-    where: {
-      status: 1,
-      id: { [Op.in]: availableTimeSlotIds },
-      time_start: { [Op.gte]: twoHoursLater },
-    },
-    order: [["time_start", "ASC"]],
-    attributes: ["id", "name", "type", "date", "time_start"]
-  });
+    if (!availableTimeSlotIds.length) return res.json({ slots: [] });
 
-  // Format time_start to AM/PM
-  return slots.map(slot => ({
-    id: slot.id,
-    name: slot.name,
-    type: slot.type,
-    date: slot.date,
-    time_start: moment(slot.time_start, "HH:mm:ss").format("hh:mm A")
-  }));
-}
+    const slots = await TimeSlot.findAll({
+      where: {
+        status: 1,
+        id: { [Op.in]: availableTimeSlotIds },
+        time_start: { [Op.gte]: twoHoursLater },
+      },
+      order: [["time_start", "ASC"]],
+      attributes: ["id", "name", "type", "date", "time_start"]
+    });
+
+    // Format time_start to AM/PM
+    const formattedSlots = slots.map(slot => ({
+      id: slot.id,
+      name: slot.name,
+      type: slot.type,
+      date: slot.date,
+      time_start: moment(slot.time_start, "HH:mm:ss").format("hh:mm A")
+    }));
+
+    res.json({ slots: formattedSlots });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 
 const getAllStaff = async (req, res) => {
@@ -279,4 +285,4 @@ const getAllStaff = async (req, res) => {
   }
 };
 
-module.exports = { getStaffDetail, getAllStaff };
+module.exports = { getStaffDetail, getAllStaff, staffAvailableSlots };
