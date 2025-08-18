@@ -350,6 +350,38 @@ const resetPassword = async (req, res) => {
   }
 }
 
+const changePassword = async (req, res) => {
+  const userId = req.user && req.user.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ message: "Old and new password required." });
+  }
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    let isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      isMatch = await bcrypt.compare(
+        oldPassword,
+        user.password.replace(/^\$2y\$/, "$2b$")
+      );
+      if (!isMatch) {
+        return res.status(400).json({ message: "Old password is incorrect." });
+      }
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ message: "Password changed successfully." });
+  } catch {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -360,4 +392,5 @@ module.exports = {
   deleteAddress,
   forgotPassword,
   resetPassword,
+  changePassword,
 };
