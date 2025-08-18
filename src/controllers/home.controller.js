@@ -66,8 +66,8 @@ const getHomeData = async (req, res) => {
     // Build featuredServices for all main categories with category info
     const featuredServices = [];
     for (const cat of mainCategories) {
-      // Use eager-loaded services, limit to 4
-      const services = (cat.services || []).slice(0, 4);
+      // Use eager-loaded services, limit to 6
+      const services = (cat.services || []).slice(0, 6);
       const formatted = await Promise.all(
         services.map(async (s) => {
           const reviews = await Review.findAll({ where: { service_id: s.id } });
@@ -100,6 +100,7 @@ const getHomeData = async (req, res) => {
       );
       if (formatted.length > 0) {
         featuredServices.push({
+          id: cat.id,
           name: cat.title,
           slug: cat.slug,
           services: formatted,
