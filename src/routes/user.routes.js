@@ -16,5 +16,7 @@ router.put("/setprofile", authenticateToken, userController.setProfile);
 router.get("/addresses", authenticateToken, userController.getAddresses);
 router.post("/saveaddress", authenticateToken, userController.saveAddress);
 router.post("/deleteaddress", authenticateToken, userController.deleteAddress);
+router.post("/forgot-password", userController.forgotPassword);
+router.post("/reset-password", userController.resetPassword);
 
 module.exports = router;

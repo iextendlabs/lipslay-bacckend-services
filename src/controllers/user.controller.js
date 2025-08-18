@@ -8,6 +8,10 @@ const {
 } = require("../models"); // Add CustomerProfile to the import
 const { Role } = require("../models"); // You need to define a Role model for the 'roles' table
 const Affiliate = require("../models/Affiliate"); // Add this at the top with other imports
+const crypto = require("crypto");
+const PasswordReset = require("../models/PasswordReset");
+const passwordResetHtml = require("../utils/mailTemplate/passwordResetHtml");
+const { sendEmail } = require("../utils/emailSender");
 
 const login = async (req, res) => {
   try {
@@ -283,6 +287,69 @@ const deleteAddress = async function (req, res) {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required." });
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    await PasswordReset.destroy({ where: { email } });
+    await PasswordReset.create({
+      email,
+      token,
+      created_at: new Date(),
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL || "https://lipslay.com";
+    const resetLink = `${frontendUrl}/password/reset/${token}?email=${encodeURIComponent(email)}`;
+    const html = passwordResetHtml({ resetLink });
+
+    await sendEmail({
+      to: email,
+      subject: "Password Reset",
+      text: `Reset your password using this link: ${resetLink}`,
+      html,
+    });
+
+    res.json({ message: "Password reset link sent to your email." });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password)
+      return res.status(400).json({ message: "Token and password required." });
+
+    const reset = await PasswordReset.findOne({ where: { token } });
+    if (!reset)
+      return res.status(400).json({ message: "Invalid or expired token." });
+
+    // Check token age (1 hour)
+    const createdAt = new Date(reset.created_at);
+    if (Date.now() - createdAt.getTime() > 3600 * 1000)
+      return res.status(400).json({ message: "Token expired." });
+
+    const user = await User.findOne({ where: { email: reset.email } });
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
+    await PasswordReset.destroy({ where: { email: reset.email } });
+
+    res.json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 module.exports = {
   login,
   register,
@@ -291,4 +358,6 @@ module.exports = {
   getAddresses,
   saveAddress,
   deleteAddress,
+  forgotPassword,
+  resetPassword,
 };
