@@ -1,5 +1,6 @@
 const Information = require('../models/Information');
 const ServiceCategory = require('../models/ServiceCategory');
+const Setting = require('../models/Setting');
 const { Op } = require('sequelize');
 
 // Endpoint: GET /information-pages
@@ -23,11 +24,20 @@ const getLayoutData = async (req, res) => {
       attributes: ['title', 'slug']
     });
 
+    // Get Head Tag and Footer Tag from settings
+    const [headTagSetting, footerTagSetting] = await Promise.all([
+      Setting.findOne({ where: { key: 'Head Tag' } }),
+      Setting.findOne({ where: { key: 'Footer Tag' } })
+    ]);
+    const headTag = headTagSetting ? headTagSetting.value : null;
+    const footerTag = footerTagSetting ? footerTagSetting.value : null;
 
     res.json({
       topPages,
       bottomPages,
-      bottomCategories
+      bottomCategories,
+      headTag,
+      footerTag
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error', details: error.message });
