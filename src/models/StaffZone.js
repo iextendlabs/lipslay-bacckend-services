@@ -9,7 +9,8 @@ const StaffZone = sequelize.define('StaffZone', {
   created_at: DataTypes.DATE,
   updated_at: DataTypes.DATE,
   extra_charges: DataTypes.STRING,
-  currency_id: DataTypes.BIGINT.UNSIGNED
+  currency_id: DataTypes.BIGINT.UNSIGNED,
+  country_id: DataTypes.BIGINT.UNSIGNED
 }, {
   tableName: 'staff_zones',
   timestamps: false
