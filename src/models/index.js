@@ -48,6 +48,7 @@ const OrderChat = require("./OrderChat");
 const Notification = require("./Notification");
 const OrderHistory = require("./OrderHistory");
 const Country = require('./Country');
+const ServiceSpecification = require("./ServiceSpecification");
 
 ServiceCategory.hasMany(Faq, { foreignKey: "category_id" });
 Faq.belongsTo(ServiceCategory, { foreignKey: "category_id" });
@@ -343,10 +344,14 @@ OrderChat.belongsTo(User, { foreignKey: "user_id", as: "user" });
 StaffZone.belongsTo(Country, { foreignKey: 'country_id', as: 'country' });
 Country.hasMany(StaffZone, { foreignKey: 'country_id', as: 'staffZones' });
 
+Service.hasMany(ServiceSpecification, { foreignKey: 'service_id' });
+ServiceSpecification.belongsTo(Service, { foreignKey: 'service_id' });
+
 module.exports = {
   ServiceCategory,
   Service,
   Staff,
+  ServiceSpecification,
   Faq,
   User,
   Review,

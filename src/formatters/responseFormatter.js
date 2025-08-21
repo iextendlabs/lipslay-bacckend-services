@@ -133,6 +133,11 @@ const formatService = async (service) => {
       image: buildUrl(urls.staffImages, staff.image),
     })),
     options: service.options,
+    specification: service.specification.map((spec) => ({
+      id: spec.id,
+      title: spec.title,
+      value: spec.value,
+    })),
     addOns: service.addOns.map((addon) => ({
       id: addon.id,
       name: addon.name,

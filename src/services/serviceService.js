@@ -11,6 +11,7 @@ const {
   ServiceOption,
   SubTitle,
   StaffToZone,
+  ServiceSpecification,
 } = require("../models");
 const cache = require("../utils/cache");
 
@@ -29,12 +30,7 @@ const trimWords = (text, maxWords = 100) => {
 };
 
 const getServiceBySlug = async (slug, zone_id) => {
-  // // --- Caching ---
-  // const cacheKey = `service_${slug}_${zone_id}`;
-  // const cached = cache.get(cacheKey);
-  // if (cached) return cached;
 
-  // --- Fetch Main Service ---
   const service = await Service.findOne({
     where: { slug, status: 1 },
     include: [
@@ -95,7 +91,7 @@ const getServiceBySlug = async (slug, zone_id) => {
           "slug",
           "status"
         ],
-      },
+      }
     ],
   });
 
@@ -103,7 +99,10 @@ const getServiceBySlug = async (slug, zone_id) => {
     return null;
   }
 
-  // --- Fetch Related Models ---
+  const specification = await ServiceSpecification.findAll({
+    where: { service_id: service.id },
+    attributes: ["id", "title", "value"],
+  });
 
   const [faqs, reviews, images, options] = await Promise.all([
     Faq.findAll({
@@ -318,10 +317,10 @@ const getServiceBySlug = async (slug, zone_id) => {
     })),
     staffMembers,
     options: formattedOptions,
+    specification: specification,
     addOns,
     packages,
   };
-  // cache.set(cacheKey, result);
   return result;
 };
 
