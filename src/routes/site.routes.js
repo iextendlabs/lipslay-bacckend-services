@@ -3,7 +3,7 @@ const router = express.Router();
 const cacheHeader = require("../middleware/cacheHeader");
 const { getHomeData } = require("../controllers/home.controller");
 const { searchServices } = require("../controllers/search.controller");
-const { getServiceBySlug } = require("../controllers/service.controller");
+const { getServiceBySlug, incrementServiceViewedBySlug } = require("../controllers/service.controller");
 const { getCategoryBySlug, listMainCategories, listAllCategories } = require("../controllers/category.controller");
 const { getInfo } = require("../controllers/info.controller");
 const { listFaqs } = require("../controllers/faq.controller");
@@ -28,5 +28,6 @@ router.get("/holidays", holidayController.listHolidayDates);
 router.get("/zones", zoneController.listZones);
 router.get("/layout-data", getLayoutData);
 router.post('/clearcache', cacheController.clearCache);
+router.post("/service/increment-viewed", incrementServiceViewedBySlug);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const path = require('path');
 const serviceService = require('../services/serviceService');
 const responseFormatter = require('../formatters/responseFormatter');
 const { writeJsonCache } = require('../helpers/jsonCacheHelper');
+const Service = require('../models/Service');
 require('dotenv').config();
 
 const getServiceBySlug = async (req, res) => {
@@ -35,4 +36,29 @@ const getServiceBySlug = async (req, res) => {
   }
 };
 
-module.exports = { getServiceBySlug };
+const incrementServiceViewedBySlug = async (req, res) => {
+  try {
+    const { slug } = req.body;
+    if (!slug || slug.trim() === '') {
+      return res.status(400).json({ error: 'Missing or empty service slug.' });
+    }
+
+    const service = await Service.findOne({ where: { slug } });
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found.' });
+    }
+
+    service.viewed = (service.viewed || 0) + 1;
+    await service.save();
+
+    res.json({ viewed: service.viewed }); // Only return the viewed value
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+module.exports = { 
+  getServiceBySlug,
+  incrementServiceViewedBySlug
+};

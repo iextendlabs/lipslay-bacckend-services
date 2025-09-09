@@ -32,6 +32,7 @@ const Service = sequelize.define(
     meta_description: DataTypes.TEXT,
     meta_keywords: DataTypes.TEXT,
     slug: DataTypes.STRING,
+    viewed: DataTypes.BIGINT.UNSIGNED
   },
   {
     tableName: "services",
