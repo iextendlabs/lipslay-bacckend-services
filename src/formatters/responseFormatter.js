@@ -184,7 +184,7 @@ const formatServiceCard = async (service) => {
     rating: service.rating,
     description: service.description,
     image: imageUrl,
-    imagePath: image,
+    imagePath: service.imagePath,
     slug: service.slug,
     hasOptionsOrQuote: service.hasOptionsOrQuote,
   };
