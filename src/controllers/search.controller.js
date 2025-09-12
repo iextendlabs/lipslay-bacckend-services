@@ -145,6 +145,7 @@ const searchServices = async (req, res) => {
           rating: avgRating,
           description: trimWords(striptags(service.description), textLimits.serviceDescriptionWords),
           image: service.image,
+          imagePath: service.image,
           slug: service.slug,
           hasOptionsOrQuote,
         };
