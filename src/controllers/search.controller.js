@@ -16,6 +16,7 @@ const searchServices = async (req, res) => {
     const minPrice = parseFloat(req.query.min_price) || 0;
     const maxPrice = parseFloat(req.query.max_price) || 1000000; // large max
     const sort = req.query.sort || "";
+    const limit = req.query.limit || null;
 
     if (id) {
       const service = await Service.findOne({
@@ -110,11 +111,17 @@ const searchServices = async (req, res) => {
       ];
     }
 
-    const services = await Service.findAll({
+    const findAllOptions = {
       where: whereConditions,
       include: includeOptions,
       order
-    });
+    };
+
+    if (limit !== null) {
+      findAllOptions.limit = parseInt(limit, 10);
+    }
+
+    const services = await Service.findAll(findAllOptions);
 
     const formatted = await Promise.all(
       services.map(async service => {
