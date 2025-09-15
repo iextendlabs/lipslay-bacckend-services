@@ -71,7 +71,7 @@ const searchServices = async (req, res) => {
       return res.json({ services: [formatServiceCard(serviceObj)] });
     }
 
-    if (!q.trim() && !category && minPrice === 0 && maxPrice >= 1000000) {
+    if (!limit &&!q.trim() && !category && minPrice === 0 && maxPrice >= 1000000) {
       return res.json({ services: [] });
     }
 
