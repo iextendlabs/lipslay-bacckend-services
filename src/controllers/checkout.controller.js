@@ -169,6 +169,7 @@ const createOrder = async (req, res) => {
         latitude: input.latitude,
         longitude: input.longitude,
         order_comment: input.comment,
+        driver_comment: input.driver_comment,
         driver_status: input.driver_status,
         time_start: time_slot?.time_start || "",
         time_end: time_slot?.time_end || "",

@@ -40,6 +40,7 @@ const Order = sequelize.define('Order', {
   latitude: DataTypes.STRING,
   longitude: DataTypes.STRING,
   order_comment: DataTypes.TEXT,
+  driver_comment: DataTypes.TEXT,
   created_at: DataTypes.DATE,
   updated_at: DataTypes.DATE,
   driver_status: DataTypes.STRING,
