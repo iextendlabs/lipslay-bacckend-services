@@ -237,6 +237,7 @@ const getOrders = async (req, res) => {
           address,
           staff_phone: staff ? staff.phone : "N/A",
           staff_whatsapp: staff ? staff.whatsapp : "N/A",
+          driver_comment: order.driver_comment || null,
         };
       })
     );
