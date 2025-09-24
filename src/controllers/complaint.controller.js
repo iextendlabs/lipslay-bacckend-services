@@ -1,4 +1,4 @@
-const { Complaint, ComplaintChat } = require("../models");
+const { Complaint, ComplaintChat, Service } = require("../models");
 
 // Create complaint
 const create = async (req, res) => {
@@ -6,7 +6,7 @@ const create = async (req, res) => {
   if (!userId) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  const { title, description, status, order_id } = req.body;
+  const { title, description, status, order_id, service_id } = req.body;
   if (!title || !description) {
     return res
       .status(400)
@@ -19,6 +19,7 @@ const create = async (req, res) => {
       status: status || "open",
       user_id: userId,
       order_id,
+      service_id,
     });
     res.status(201).json(complaint);
   } catch (err) {
@@ -39,6 +40,11 @@ const view = async (req, res) => {
           model: ComplaintChat,
           as: "chats",
         },
+        {
+          model: Service,
+          as: "service",
+          attributes: ["name"],
+        },
       ],
     });
     if (!complaint) return res.status(404).json({ error: "Not found" });
@@ -52,6 +58,10 @@ const view = async (req, res) => {
         ...chat,
         self: chat.user_id === userId,
       }));
+    }
+
+    if (complaintObj.service) {
+      complaintObj.service_name = complaintObj.service.name ?? null;
     }
 
     res.json(complaintObj);

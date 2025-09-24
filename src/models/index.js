@@ -174,6 +174,9 @@ User.hasMany(Complaint, { foreignKey: "user_id", as: "complaints" });
 Complaint.belongsTo(Order, { foreignKey: "order_id", as: "order" });
 Order.hasMany(Complaint, { foreignKey: "order_id", as: "complaints" });
 
+Complaint.belongsTo(Service, { foreignKey: "service_id", as: "service" });
+Service.hasMany(Complaint, { foreignKey: "service_id", as: "complaints" });
+
 ComplaintChat.belongsTo(User, { foreignKey: "user_id", as: "user" });
 User.hasMany(ComplaintChat, { foreignKey: "user_id", as: "complaintChats" });
 
@@ -346,6 +349,15 @@ Country.hasMany(StaffZone, { foreignKey: 'country_id', as: 'staffZones' });
 
 Service.hasMany(ServiceSpecification, { foreignKey: 'service_id' });
 ServiceSpecification.belongsTo(Service, { foreignKey: 'service_id' });
+
+Order.hasMany(OrderTotal, { foreignKey: "order_id", as: "order_totals" });
+OrderTotal.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+Order.hasMany(Review, { foreignKey: "order_id", as: "reviews" });
+Review.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+Service.hasMany(ServiceOption, { foreignKey: "service_id", as: "serviceOption" });
+ServiceOption.belongsTo(Service, { foreignKey: "service_id", as: "service" });
 
 module.exports = {
   ServiceCategory,

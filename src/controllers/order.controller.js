@@ -32,6 +32,7 @@ const listOrders = async (req, res) => {
     const orders = await Order.findAll({
       where: { customer_id: userId, status: { [Op.ne]: "Draft" } },
       order: [["created_at", "DESC"]],
+      attributes: ["id", "date","total_amount","currency_symbol","currency_rate","status","payment_method","customer_name","staff_name","time_slot_value","service_staff_id"],
       include: [
         {
           model: Complaint,
@@ -39,22 +40,36 @@ const listOrders = async (req, res) => {
           attributes: ["id"],
           required: false,
         },
+        {
+          model: OrderService,
+          as: "order_services",
+          attributes: ["id"],
+          include: [
+            {
+              model: Service,
+              as: "service",
+              attributes: ["id", "name"],
+            },
+          ],
+        },
       ],
     });
 
-    // Add complaint_id (first complaint's id or null) to each order
-    const ordersWithComplaintId = orders.map((order) => {
+    const ordersWithDetails = orders.map((order) => {
       const orderData = order.toJSON();
-      // Remove 'complaints' and only include 'complaint_id'
-      const { complaints, ...rest } = orderData;
+      const { complaints, order_services, ...rest } = orderData;
       return {
         ...rest,
         complaint_id:
           complaints && complaints.length > 0 ? complaints[0].id : null,
+        order_services: (order_services || []).map((os) => ({
+          id: os.service?.id,
+          name: os.service?.name,
+        })),
       };
     });
 
-    res.json({ orders: ordersWithComplaintId });
+    res.json({ orders: ordersWithDetails });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

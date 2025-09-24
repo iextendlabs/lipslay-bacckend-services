@@ -14,6 +14,7 @@ const Complaint = sequelize.define(
     status: { type: DataTypes.STRING, allowNull: false },
     user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
     order_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+    service_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
   },
   {
     tableName: "complaints",
