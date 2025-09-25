@@ -13,14 +13,17 @@ const create = async (req, res) => {
       .json({ error: "Title and description are required" });
   }
   try {
-    const complaint = await Complaint.create({
+    const complaintData = {
       title,
       description,
       status: status || "open",
       user_id: userId,
       order_id,
-      service_id,
-    });
+    };
+    if (service_id && service_id !== "") {
+      complaintData.service_id = service_id;
+    }
+    const complaint = await Complaint.create(complaintData);
     res.status(201).json(complaint);
   } catch (err) {
     res.status(400).json({ error: err.message });
